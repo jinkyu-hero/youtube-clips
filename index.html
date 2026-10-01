@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>구간 보관함</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#15171d;
+  --panel:#1c1f27;
+  --panel-2:#252935;
+  --line:#323746;
+  --text:#ecebe7;
+  --muted:#a3a6b1;
+  --faint:#6f7380;
+  --accent:#f5b83d;
+  --accent-ink:#1d1606;
+  --accent-soft:rgba(245,184,61,.16);
+  --danger:#f07563;
+  --ok:#7fcf9b;
+  --radius-lg:14px;
+  --radius:9px;
+  --radius-sm:6px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{
+  font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  font-feature-settings:"tnum" 1;
+}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- layout ---------- */
+.app{
+  display:grid;grid-template-columns:minmax(320px,400px) 1fr;grid-template-areas:"side main";
+  height:100vh;height:100dvh;
+}
+.side{grid-area:side;display:flex;flex-direction:column;min-height:0;background:var(--panel);border-right:1px solid var(--line)}
+.main{grid-area:main;overflow:auto;padding:28px 32px 48px}
+.main-inner{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+
+/* ---------- side ---------- */
+.side-head{padding:20px 18px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
+.brand-mark{width:22px;height:22px;flex:none}
+.count{color:var(--muted);font-size:13px;font-weight:500}
+.head-actions{display:flex;gap:6px}
+.search{position:relative}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--faint);pointer-events:none}
+.search input{
+  width:100%;padding:10px 12px 10px 34px;border-radius:var(--radius);border:1px solid var(--line);
+  background:var(--bg);outline:none;
+}
+.search input:focus{border-color:var(--accent)}
+.search input::placeholder{color:var(--faint)}
+
+.list{list-style:none;margin:0;padding:8px;overflow:auto;flex:1;min-height:0}
+.clip{
+  position:relative;display:grid;grid-template-columns:18px 112px 1fr auto;gap:10px;align-items:center;
+  padding:8px 8px 8px 4px;border-radius:var(--radius);border:1px solid transparent;
+}
+.clip:hover{background:var(--panel-2)}
+.clip.active{background:var(--accent-soft);border-color:rgba(245,184,61,.45)}
+.clip.sortable-ghost{opacity:.35}
+.clip.sortable-chosen{background:var(--panel-2)}
+.drag{
+  width:18px;height:40px;display:grid;place-items:center;color:var(--faint);cursor:grab;touch-action:none;
+  border:0;background:none;padding:0;border-radius:4px;
+}
+.drag:active{cursor:grabbing}
+.drag svg{width:12px;height:18px}
+.no-sort .drag{visibility:hidden}
+.play-hit{
+  grid-column:2 / 4;display:grid;grid-template-columns:112px 1fr;gap:10px;align-items:center;
+  border:0;background:none;padding:0;text-align:left;min-width:0;
+}
+.thumb{position:relative;width:112px;aspect-ratio:16/9;border-radius:var(--radius-sm);overflow:hidden;background:#000}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .len{
+  position:absolute;right:4px;bottom:4px;padding:1px 5px;border-radius:4px;
+  background:rgba(0,0,0,.78);color:#fff;font-size:11.5px;font-weight:600;
+}
+.clip.active .thumb::after{
+  content:"";position:absolute;inset:0;border:2px solid var(--accent);border-radius:var(--radius-sm);
+}
+.meta{min-width:0;display:flex;flex-direction:column;gap:2px}
+.meta .title{font-weight:600;font-size:14.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.meta .range{font-size:12.5px;color:var(--accent);font-weight:600}
+.meta .memo{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clip-actions{display:flex;flex-direction:column;gap:2px;opacity:0;transition:opacity .12s}
+.clip:hover .clip-actions,.clip:focus-within .clip-actions,.clip.active .clip-actions{opacity:1}
+@media (hover:none){.clip-actions{opacity:1}}
+
+.empty{padding:36px 22px;color:var(--muted);text-align:center;font-size:14px;line-height:1.6}
+.empty strong{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  border-radius:var(--radius);border:1px solid var(--line);background:var(--panel-2);
+  padding:8px 13px;font-size:14px;font-weight:600;white-space:nowrap;
+}
+.btn:hover{border-color:#454b5c}
+.btn svg{width:16px;height:16px;flex:none}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{border-color:#ffd27a;background:#ffc451}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn-ghost:hover{color:var(--text);background:var(--panel-2);border-color:transparent}
+.btn-sm{padding:6px 10px;font-size:13px}
+.icon-btn{
+  width:32px;height:32px;display:grid;place-items:center;border-radius:7px;border:0;background:transparent;color:var(--muted);
+}
+.icon-btn:hover{background:rgba(255,255,255,.07);color:var(--text)}
+.icon-btn.danger:hover{color:var(--danger)}
+.icon-btn svg{width:16px;height:16px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---------- player ---------- */
+.notice{
+  border:1px solid rgba(245,184,61,.4);background:var(--accent-soft);border-radius:var(--radius);
+  padding:12px 14px;font-size:13.5px;line-height:1.6;
+}
+.notice b{color:var(--accent)}
+.notice code{background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;font-size:12.5px}
+.player-box{position:relative;aspect-ratio:16/9;background:#000;border-radius:var(--radius-lg);overflow:hidden}
+.player-box iframe,.player-box #player{position:absolute;inset:0;width:100%;height:100%;border:0}
+.placeholder{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  color:var(--muted);text-align:center;padding:20px;background:#0d0e12;font-size:14.5px;
+}
+.placeholder svg{width:44px;height:44px;color:var(--faint)}
+.player-error{
+  position:absolute;left:12px;right:12px;bottom:12px;padding:10px 12px;border-radius:var(--radius);
+  background:rgba(20,10,8,.92);border:1px solid rgba(240,117,99,.5);color:#ffd9d2;font-size:13.5px;
+}
+
+/* timeline: the one memorable thing — an editor's tape with in/out marks */
+.deck{display:flex;flex-direction:column;gap:8px}
+.now{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-height:24px}
+.now-title{font-weight:650;font-size:16px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.now-time{color:var(--muted);font-size:13.5px;flex:none}
+.now-time b{color:var(--text);font-weight:600}
+.tape{
+  position:relative;height:34px;border-radius:8px;background:
+    repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),rgba(255,255,255,.06) calc(10% - 1px) 10%),
+    var(--panel);
+  border:1px solid var(--line);cursor:pointer;touch-action:none;overflow:hidden;
+}
+.tape.disabled{cursor:default;opacity:.5}
+.tape-range{
+  position:absolute;top:0;bottom:0;background:var(--accent-soft);
+  border-left:3px solid var(--accent);border-right:3px solid var(--accent);display:none;
+}
+.tape-range.open-end{border-right-color:transparent}
+.tape-range.open-start{border-left-color:transparent}
+.tape-head{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--text);transform:translateX(-1px);display:none}
+.tape-head::before{content:"";position:absolute;top:0;left:-4px;border:5px solid transparent;border-top-color:var(--text)}
+.tape-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--faint)}
+
+/* ---------- editor ---------- */
+.editor{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg)}
+.editor-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px}
+.editor-head h2{margin:0;font-size:16px;font-weight:700}
+.editor-body{padding:4px 16px 16px;display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line);padding-top:16px}
+.editor.collapsed .editor-body{display:none}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.field .label{font-size:13px;font-weight:600;color:var(--muted)}
+.input,.textarea{
+  width:100%;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--bg);outline:none;
+}
+.input:focus,.textarea:focus{border-color:var(--accent)}
+.input::placeholder,.textarea::placeholder{color:var(--faint)}
+.input.bad{border-color:var(--danger)}
+.textarea{resize:vertical;min-height:64px;line-height:1.5}
+.url-row{display:flex;gap:8px}
+.url-row .input{flex:1;min-width:0}
+.times{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.time-card{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:10px;display:flex;flex-direction:column;gap:8px}
+.time-card .label{display:flex;justify-content:space-between;align-items:center}
+.time-input{
+  width:100%;border:0;background:transparent;outline:none;font-size:24px;font-weight:700;letter-spacing:-.01em;padding:2px 0;
+}
+.time-input::placeholder{color:var(--faint);font-weight:500}
+.time-input.bad{color:var(--danger)}
+.time-tools{display:grid;grid-template-columns:auto auto 1fr;gap:6px}
+.nudge{
+  min-width:44px;padding:7px 8px;border-radius:7px;border:1px solid var(--line);background:var(--panel-2);font-size:13px;font-weight:600;
+}
+.nudge:hover{border-color:#454b5c}
+.mark{
+  padding:7px 10px;border-radius:7px;border:1px solid rgba(245,184,61,.55);background:var(--accent-soft);color:var(--accent);
+  font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:5px;
+}
+.mark:hover{background:rgba(245,184,61,.26)}
+.mark svg{width:14px;height:14px}
+.form-msg{font-size:13.5px;color:var(--danger);min-height:0}
+.form-msg:empty{display:none}
+.form-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.form-actions .spacer{flex:1}
+.len-preview{font-size:13px;color:var(--muted)}
+.len-preview b{color:var(--text)}
+
+/* ---------- dialog / toast ---------- */
+dialog{
+  border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--panel);color:var(--text);
+  padding:22px;width:min(420px,calc(100vw - 32px));
+}
+dialog::backdrop{background:rgba(5,6,10,.65)}
+dialog h3{margin:0 0 8px;font-size:17px}
+dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
+.dlg-actions{display:flex;flex-direction:column;gap:8px}
+.dlg-actions .btn{justify-content:flex-start;padding:12px 14px;text-align:left}
+.dlg-actions .btn span{display:block;font-weight:500;color:var(--muted);font-size:12.5px}
+.dlg-actions .btn-primary span{color:rgba(29,22,6,.75)}
+.dlg-actions .btn > div{display:flex;flex-direction:column;gap:2px}
+
+.toast{
+  position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  background:#f1efe9;color:#17181d;border-radius:10px;padding:10px 12px 10px 16px;font-size:14px;font-weight:600;
+  display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.4);transition:.18s ease;z-index:50;
+  max-width:calc(100vw - 32px);
+}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{border:0;background:#17181d;color:#f1efe9;border-radius:7px;padding:5px 10px;font-weight:700;font-size:13px}
+
+/* ---------- responsive ---------- */
+@media (max-width:860px){
+  .app{grid-template-columns:1fr;grid-template-areas:"main" "side";height:auto}
+  .main{overflow:visible;padding:14px 14px 8px}
+  .side{border-right:0;border-top:1px solid var(--line)}
+  .list{overflow:visible;padding-bottom:90px}
+  .side-head{position:sticky;top:0;z-index:5;background:var(--panel)}
+  .times{grid-template-columns:1fr}
+  .clip{grid-template-columns:18px 1fr auto}
+  .play-hit{grid-column:2 / 3;grid-template-columns:104px 1fr}
+  .thumb{width:104px}
+  .clip-actions{opacity:1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" aria-label="저장한 구간">
+    <div class="side-head">
+      <div class="brand">
+        <h1>
+          <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="2" y="5" width="20" height="14" rx="3" stroke="#a3a6b1" stroke-width="1.6"/>
+            <path d="M8 5v14M16 5v14" stroke="#f5b83d" stroke-width="2.4"/>
+          </svg>
+          구간 보관함
+        </h1>
+        <div class="head-actions">
+          <button class="icon-btn" id="exportBtn" title="백업 파일로 내보내기" aria-label="백업 파일로 내보내기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+          </button>
+          <button class="icon-btn" id="importBtn" title="백업 파일 불러오기" aria-label="백업 파일 불러오기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+          </button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden>
+        </div>
+      </div>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <label class="sr-only" for="q">구간 검색</label>
+        <input id="q" type="search" placeholder="제목이나 메모로 찾기" autocomplete="off">
+      </div>
+      <div class="count" id="count"></div>
+    </div>
+    <ul class="list" id="list"></ul>
+  </aside>
+
+  <main class="main">
+    <div class="main-inner">
+      <div class="notice" id="fileNotice" hidden></div>
+
+      <div class="player-box">
+        <div id="player"></div>
+        <div class="placeholder" id="placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="m10 9 5 3-5 3z" fill="currentColor"/></svg>
+          <div>목록에서 구간을 누르면 여기서 재생돼요</div>
+        </div>
+        <div class="player-error" id="playerError" hidden></div>
+      </div>
+
+      <div class="deck">
+        <div class="now">
+          <div class="now-title" id="nowTitle"></div>
+          <div class="now-time" id="nowTime"></div>
+        </div>
+        <div class="tape disabled" id="tape" role="slider" aria-label="영상 위치" tabindex="-1">
+          <div class="tape-range" id="tapeRange"></div>
+          <div class="tape-head" id="tapeHead"></div>
+        </div>
+        <div class="tape-labels"><span>0:00</span><span id="tapeEnd">–</span></div>
+      </div>
+
+      <section class="editor" id="editor">
+        <div class="editor-head">
+          <h2 id="editorTitle">새 구간 만들기</h2>
+          <button class="btn btn-sm" id="toggleEditor" aria-expanded="true">접기</button>
+        </div>
+        <div class="editor-body">
+          <div class="field">
+            <label for="url">유튜브 주소</label>
+            <div class="url-row">
+              <input class="input" id="url" placeholder="https://youtu.be/…" inputmode="url" autocomplete="off">
+              <button class="btn" id="loadBtn">불러오기</button>
+            </div>
+          </div>
+
+          <div class="times">
+            <div class="time-card">
+              <div class="label"><label for="startIn">시작</label></div>
+              <input class="time-input" id="startIn" placeholder="0:00" inputmode="numeric" autocomplete="off">
+              <div class="time-tools">
+                <button class="nudge" data-nudge="start" data-d="-1" aria-label="시작 1초 앞으로">−1초</button>
+                <button class="nudge" data-nudge="start" data-d="1" aria-label="시작 1초 뒤로">+1초</button>
+                <button class="mark" data-mark="start">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 4v16"/><path d="M6 5h11l-3 4 3 4H6"/></svg>
+                  지금 시점
+                </button>
+              </div>
+            </div>
+            <div class="time-card">
+              <div class="label"><label for="endIn">끝</label></div>
+              <input class="time-input" id="endIn" placeholder="0:00" inputmode="numeric" autocomplete="off">
+              <div class="time-tools">
+                <button class="nudge" data-nudge="end" data-d="-1" aria-label="끝 1초 앞으로">−1초</button>
+                <button class="nudge" data-nudge="end" data-d="1" aria-label="끝 1초 뒤로">+1초</button>
+                <button class="mark" data-mark="end">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 4v16"/><path d="M6 5h11l-3 4 3 4H6"/></svg>
+                  지금 시점
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="titleIn">제목</label>
+            <input class="input" id="titleIn" placeholder="영상을 불러오면 영상 제목이 들어가요" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="memoIn">메모</label>
+            <textarea class="textarea" id="memoIn" placeholder="이 구간에 대해 남길 말 (검색에도 쓰여요)"></textarea>
+          </div>
+
+          <div class="form-msg" id="formMsg" role="alert"></div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" id="saveBtn">구간 저장</button>
+            <button class="btn" id="previewBtn">구간 미리 듣기</button>
+            <span class="len-preview" id="lenPreview"></span>
+            <span class="spacer"></span>
+            <button class="btn btn-ghost" id="cancelBtn" hidden>수정 취소</button>
+            <button class="btn btn-ghost" id="resetBtn">새로 쓰기</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<dialog id="importDlg">
+  <h3>백업 불러오기</h3>
+  <p id="importInfo"></p>
+  <div class="dlg-actions">
+    <button class="btn btn-primary" id="mergeBtn"><div>기존 목록에 합치기<span>지금 있는 구간은 그대로 두고, 없는 구간만 더해요</span></div></button>
+    <button class="btn" id="overwriteBtn"><div>덮어쓰기<span>지금 목록을 지우고 백업 내용으로 바꿔요</span></div></button>
+    <button class="btn btn-ghost" id="importCancel">취소</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const KEY = 'ytclips.v1';
+  const ID_RE = /^[\w-]{11}$/;
+
+  /* ---------------- storage ---------------- */
+  const isValidClip = c => c && ID_RE.test(c.videoId) && Number.isFinite(+c.start) && Number.isFinite(+c.end) && +c.end > +c.start;
+  const normalize = c => ({
+    id: typeof c.id === 'string' && c.id ? c.id : uid(),
+    videoId: c.videoId,
+    title: String(c.title || '제목 없는 구간').slice(0, 300),
+    start: Math.max(0, Math.round(+c.start)),
+    end: Math.round(+c.end),
+    memo: String(c.memo || '').slice(0, 5000),
+    createdAt: c.createdAt || Date.now()
+  });
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function load(){
+    try {
+      const raw = JSON.parse(localStorage.getItem(KEY) || '[]');
+      return Array.isArray(raw) ? raw.filter(isValidClip).map(normalize) : [];
+    } catch (e) { return []; }
+  }
+  function persist(){
+    try { localStorage.setItem(KEY, JSON.stringify(clips)); }
+    catch (e) { toast('브라우저에 저장하지 못했어요. 백업 파일로 내보내 두세요.'); }
+  }
+  let clips = load();
+
+  /* ---------------- time helpers ---------------- */
+  const pad = n => String(n).padStart(2, '0');
+  function fmt(sec){
+    sec = Math.max(0, Math.round(sec || 0));
+    const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+    return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+  }
+  // returns seconds, null for empty, NaN for invalid
+  function parseTime(str){
+    str = String(str || '').trim().replace(/：/g, ':');
+    if (!str) return null;
+    if (/^\d+$/.test(str)) return +str;
+    const p = str.split(':');
+    if (p.length < 2 || p.length > 3 || p.some(x => !/^\d+$/.test(x))) return NaN;
+    const n = p.map(Number);
+    if (p.length === 2){ if (n[1] > 59) return NaN; return n[0] * 60 + n[1]; }
+    if (n[1] > 59 || n[2] > 59) return NaN;
+    return n[0] * 3600 + n[1] * 60 + n[2];
+  }
+  function parseTParam(t){
+    if (!t) return null;
+    if (/^\d+s?$/.test(t)) return parseInt(t, 10);
+    const m = t.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
+    if (!m || !m[0]) return null;
+    return (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0);
+  }
+  function parseYouTube(input){
+    const s = String(input || '').trim();
+    if (ID_RE.test(s)) return { id: s, t: null };
+    let u;
+    try { u = new URL(/^https?:\/\//i.test(s) ? s : 'https://' + s); } catch (e) { return null; }
+    const host = u.hostname.replace(/^(www|m|music)\./, '');
+    let id = null;
+    if (host === 'youtu.be') id = u.pathname.split('/')[1];
+    else if (host === 'youtube.com' || host === 'youtube-nocookie.com'){
+      if (u.pathname === '/watch') id = u.searchParams.get('v');
+      else {
+        const m = u.pathname.match(/^\/(?:shorts|embed|live|v)\/([\w-]{11})/);
+        if (m) id = m[1];
+      }
+    }
+    if (!id || !ID_RE.test(id)) return null;
+    return { id, t: parseTParam(u.searchParams.get('t') || u.searchParams.get('start')) };
+  }
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const thumb = id => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+
+  /* ---------------- toast ---------------- */
+  let toastTimer;
+  function toast(msg, actLabel, act){
+    const el = $('#toast'), btn = $('#toastAct');
+    $('#toastMsg').textContent = msg;
+    btn.hidden = !actLabel;
+    if (actLabel){ btn.textContent = actLabel; btn.onclick = () => { el.classList.remove('show'); act(); }; }
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), actLabel ? 6000 : 2600);
+  }
+
+  /* ---------------- file:// notice ---------------- */
+  const isFile = location.protocol === 'file:';
+  if (isFile){
+    const n = $('#fileNotice');
+    n.hidden = false;
+    n.innerHTML = '<b>파일을 바로 열면 유튜브가 재생을 막을 수 있어요.</b> 재생이 안 되면 이 파일이 있는 폴더에서 터미널을 열고 <code>python3 -m http.server</code>를 실행한 뒤, 브라우저에서 <code>localhost:8000/youtube-clips.html</code>로 열어주세요. 저장한 구간은 여는 주소마다 따로 보관되니, 옮길 때는 백업 내보내기를 써주세요.';
+  }
+
+  /* ---------------- player ---------------- */
+  let player = null, ready = false, queued = [];
+  let loadedId = null;           // video currently in player
+  let mode = 'free';             // 'free' | 'clip' | 'preview'
+  let activeId = null;           // clip highlighted in list
+  let segEnd = null;             // end time to stop at
+  let titleFillFor = null;       // videoId whose title should be filled into the form
+
+  const whenReady = fn => ready ? fn() : queued.push(fn);
+  window.onYouTubeIframeAPIReady = () => {
+    const vars = { playsinline: 1, rel: 0, modestbranding: 1 };
+    if (/^https?:$/.test(location.protocol)) vars.origin = location.origin;
+    player = new YT.Player('player', {
+      width: '100%', height: '100%', playerVars: vars,
+      events: {
+        onReady: () => { ready = true; queued.forEach(f => f()); queued = []; },
+        onStateChange: onState,
+        onError: onError
+      }
+    });
+  };
+  const s = document.createElement('script');
+  s.src = 'https://www.youtube.com/iframe_api';
+  s.onerror = () => showError('유튜브 플레이어를 불러오지 못했어요. 인터넷 연결을 확인해주세요.');
+  document.head.appendChild(s);
+
+  function showError(msg){ const e = $('#playerError'); e.textContent = msg; e.hidden = !msg; }
+  function onError(ev){
+    const map = {
+      2: '영상 주소가 올바르지 않아요.',
+      5: '이 브라우저에서 영상을 재생할 수 없어요.',
+      100: '영상을 찾을 수 없어요. 삭제됐거나 비공개일 수 있어요.',
+      101: '영상 주인이 다른 사이트에서의 재생을 막아둔 영상이에요.',
+      150: '영상 주인이 다른 사이트에서의 재생을 막아둔 영상이에요.',
+      153: isFile ? '파일을 바로 열어서 유튜브가 재생을 막았어요. 위 안내대로 localhost 주소로 열어주세요.' : '유튜브가 이 페이지에서의 재생을 막았어요.'
+    };
+    showError(map[ev.data] || `영상을 재생하지 못했어요 (오류 ${ev.data}).`);
+  }
+  function onState(ev){
+    if (ev.data === YT.PlayerState.PLAYING || ev.data === YT.PlayerState.CUED || ev.data === YT.PlayerState.PAUSED){
+      showError('');
+      if (titleFillFor && titleFillFor === loadedId){
+        const t = player.getVideoData && player.getVideoData().title;
+        if (t){
+          if (!$('#titleIn').value.trim()) $('#titleIn').value = t;
+          titleFillFor = null;
+        }
+      }
+    }
+  }
+  function loadVideo(id, start, autoplay){
+    whenReady(() => {
+      showError('');
+      $('#placeholder').hidden = true;
+      if (loadedId === id){
+        player.seekTo(start || 0, true);
+        if (autoplay) player.playVideo(); else player.pauseVideo();
+      } else {
+        loadedId = id;
+        const opts = { videoId: id, startSeconds: start || 0 };
+        autoplay ? player.loadVideoById(opts) : player.cueVideoById(opts);
+      }
+    });
+  }
+  const curTime = () => (ready && loadedId && player.getCurrentTime) ? player.getCurrentTime() || 0 : 0;
+  const duration = () => (ready && loadedId && player.getDuration) ? player.getDuration() || 0 : 0;
+  const isPlaying = () => ready && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING;
+
+  function seek(t){
+    whenReady(() => {
+      if (!loadedId) return;
+      const wasPlaying = isPlaying();
+      player.seekTo(Math.max(0, t), true);
+      if (!wasPlaying) player.pauseVideo();
+    });
+  }
+
+  /* ---------------- clip playback ---------------- */
+  function playClip(c){
+    activeId = c.id;
+    mode = 'clip';
+    segEnd = c.end;
+    loadVideo(c.videoId, c.start, true);
+    renderList();
+    updateNow();
+  }
+
+  // ticker: stops at segment end, drives the tape
+  setInterval(() => {
+    if (!ready || !loadedId) return;
+    const t = curTime();
+    if ((mode === 'clip' || mode === 'preview') && segEnd != null && isPlaying() && t >= segEnd - 0.05){
+      player.pauseVideo();
+      mode = 'free';
+    }
+    drawTape(t);
+  }, 120);
+
+  /* ---------------- tape ---------------- */
+  function currentRange(){
+    if (editorOpen && draft.videoId && draft.videoId === loadedId && (draft.start != null || draft.end != null))
+      return { start: draft.start, end: draft.end };
+    const c = clips.find(x => x.id === activeId);
+    if (c && c.videoId === loadedId) return { start: c.start, end: c.end };
+    return null;
+  }
+  function drawTape(t){
+    const d = duration(), tape = $('#tape'), r = $('#tapeRange'), h = $('#tapeHead');
+    tape.classList.toggle('disabled', !d);
+    $('#tapeEnd').textContent = d ? fmt(d) : '–';
+    $('#nowTime').innerHTML = d ? `<b>${fmt(t)}</b> / ${fmt(d)}` : '';
+    if (!d){ r.style.display = h.style.display = 'none'; return; }
+    h.style.display = 'block';
+    h.style.left = Math.min(100, t / d * 100) + '%';
+    const rg = currentRange();
+    if (!rg){ r.style.display = 'none'; return; }
+    const a = rg.start != null ? rg.start : 0, b = rg.end != null ? rg.end : d;
+    if (b <= a){ r.style.display = 'none'; return; }
+    r.style.display = 'block';
+    r.style.left = (a / d * 100) + '%';
+    r.style.width = Math.max(0.4, (b - a) / d * 100) + '%';
+    r.classList.toggle('open-start', rg.start == null);
+    r.classList.toggle('open-end', rg.end == null);
+  }
+  function tapeSeek(e){
+    const d = duration(); if (!d) return;
+    const rect = $('#tape').getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    if (mode === 'clip' || mode === 'preview') mode = 'free';
+    seek(ratio * d);
+  }
+  let tapeDrag = false;
+  $('#tape').addEventListener('pointerdown', e => { tapeDrag = true; $('#tape').setPointerCapture(e.pointerId); tapeSeek(e); });
+  $('#tape').addEventListener('pointermove', e => { if (tapeDrag) tapeSeek(e); });
+  $('#tape').addEventListener('pointerup', () => { tapeDrag = false; });
+  $('#tape').addEventListener('pointercancel', () => { tapeDrag = false; });
+
+  function updateNow(){
+    const c = clips.find(x => x.id === activeId);
+    $('#nowTitle').textContent = c ? c.title : (editorOpen && draft.videoId === loadedId && $('#titleIn').value) || '';
+  }
+
+  /* ---------------- list ---------------- */
+  let query = '';
+  let sortable = null;
+  const matches = c => {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    return c.title.toLowerCase().includes(q) || c.memo.toLowerCase().includes(q);
+  };
+  function renderList(){
+    const list = $('#list');
+    const shown = clips.filter(matches);
+    $('#count').textContent = query
+      ? `${clips.length}개 중 ${shown.length}개`
+      : (clips.length ? `구간 ${clips.length}개 · 손잡이를 끌어 순서를 바꿀 수 있어요` : '');
+    list.classList.toggle('no-sort', !!query);
+    if (!clips.length){
+      list.innerHTML = `<li class="empty"><strong>아직 저장한 구간이 없어요</strong>유튜브 주소를 불러오고, 영상을 보면서 시작과 끝을 찍은 다음 저장하세요.</li>`;
+    } else if (!shown.length){
+      list.innerHTML = `<li class="empty"><strong>‘${esc(query)}’에 맞는 구간이 없어요</strong>다른 단어로 찾아보세요.</li>`;
+    } else {
+      list.innerHTML = shown.map(c => `
+        <li class="clip${c.id === activeId ? ' active' : ''}" data-id="${c.id}">
+          <button class="drag" aria-label="끌어서 순서 바꾸기" tabindex="-1">
+            <svg viewBox="0 0 12 18" fill="currentColor"><circle cx="3" cy="3" r="1.5"/><circle cx="9" cy="3" r="1.5"/><circle cx="3" cy="9" r="1.5"/><circle cx="9" cy="9" r="1.5"/><circle cx="3" cy="15" r="1.5"/><circle cx="9" cy="15" r="1.5"/></svg>
+          </button>
+          <button class="play-hit" data-act="play" aria-label="${esc(c.title)} 재생">
+            <span class="thumb"><img src="${thumb(c.videoId)}" alt="" loading="lazy"><span class="len">${fmt(c.end - c.start)}</span></span>
+            <span class="meta">
+              <span class="title">${esc(c.title)}</span>
+              <span class="range">${fmt(c.start)} – ${fmt(c.end)}</span>
+              ${c.memo ? `<span class="memo">${esc(c.memo)}</span>` : ''}
+            </span>
+          </button>
+          <div class="clip-actions">
+            <button class="icon-btn" data-act="edit" aria-label="수정" title="수정">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>
+            </button>
+            <button class="icon-btn danger" data-act="del" aria-label="삭제" title="삭제">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+            </button>
+          </div>
+        </li>`).join('');
+    }
+    if (window.Sortable){
+      if (!sortable){
+        sortable = Sortable.create(list, {
+          handle: '.drag', animation: 150, draggable: '.clip',
+          onEnd: e => {
+            if (query || e.oldIndex === e.newIndex) return;
+            const [m] = clips.splice(e.oldIndex, 1);
+            clips.splice(e.newIndex, 0, m);
+            persist();
+          }
+        });
+      }
+      sortable.option('disabled', !!query);
+    }
+  }
+  $('#list').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]'); if (!btn) return;
+    const li = btn.closest('.clip'); const c = clips.find(x => x.id === li.dataset.id); if (!c) return;
+    const act = btn.dataset.act;
+    if (act === 'play') playClip(c);
+    else if (act === 'edit') startEdit(c);
+    else if (act === 'del') removeClip(c);
+  });
+  $('#q').addEventListener('input', e => { query = e.target.value.trim(); renderList(); });
+
+  function removeClip(c){
+    const idx = clips.indexOf(c);
+    clips.splice(idx, 1);
+    persist();
+    if (draft.id === c.id) resetForm(true);
+    if (activeId === c.id) activeId = null;
+    renderList(); updateNow();
+    toast('구간을 삭제했어요', '되돌리기', () => {
+      clips.splice(Math.min(idx, clips.length), 0, c);
+      persist(); renderList();
+    });
+  }
+
+  /* ---------------- editor ---------------- */
+  let editorOpen = true;
+  let draft = { id: null, videoId: null, start: null, end: null };
+  const mqMobile = window.matchMedia('(max-width: 860px)');
+
+  function setEditorOpen(open){
+    editorOpen = open;
+    $('#editor').classList.toggle('collapsed', !open);
+    $('#toggleEditor').textContent = open ? '접기' : '펼치기';
+    $('#toggleEditor').setAttribute('aria-expanded', open);
+  }
+  $('#toggleEditor').addEventListener('click', () => setEditorOpen(!editorOpen));
+  if (mqMobile.matches && clips.length) setEditorOpen(false);
+
+  function setMsg(m){ $('#formMsg').textContent = m || ''; }
+
+  function syncTimes(){
+    $('#startIn').value = draft.start != null ? fmt(draft.start) : '';
+    $('#endIn').value = draft.end != null ? fmt(draft.end) : '';
+    $('#startIn').classList.remove('bad'); $('#endIn').classList.remove('bad');
+    updateLen();
+  }
+  function updateLen(){
+    const el = $('#lenPreview');
+    if (draft.start != null && draft.end != null && draft.end > draft.start) el.innerHTML = `길이 <b>${fmt(draft.end - draft.start)}</b>`;
+    else el.textContent = '';
+  }
+
+  function loadFromUrl(){
+    const v = parseYouTube($('#url').value);
+    if (!v){ setMsg('유튜브 영상 주소를 확인해주세요. 예: https://youtu.be/영상ID'); $('#url').classList.add('bad'); return false; }
+    $('#url').classList.remove('bad'); setMsg('');
+    const changed = draft.videoId !== v.id;
+    draft.videoId = v.id;
+    if (changed && !draft.id){
+      draft.start = v.t != null ? v.t : null; draft.end = null; syncTimes();
+      if (!$('#titleIn').value.trim()) titleFillFor = v.id;
+    }
+    if (mode !== 'free') mode = 'free';
+    activeId = null; renderList();
+    loadVideo(v.id, draft.start || 0, false);
+    return true;
+  }
+  $('#loadBtn').addEventListener('click', loadFromUrl);
+  $('#url').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); loadFromUrl(); } });
+  $('#url').addEventListener('paste', () => setTimeout(() => { if (parseYouTube($('#url').value)) loadFromUrl(); }, 0));
+
+  function ensureVideoForDraft(){
+    if (!draft.videoId){ if (!loadFromUrl()) return false; }
+    if (draft.videoId !== loadedId){ loadVideo(draft.videoId, draft.start || 0, false); return false; }
+    return true;
+  }
+
+  document.querySelectorAll('[data-mark]').forEach(b => b.addEventListener('click', () => {
+    if (!draft.videoId && !loadFromUrl()) return;
+    if (draft.videoId !== loadedId){ setMsg('먼저 영상을 불러온 뒤 재생하면서 시점을 찍어주세요.'); ensureVideoForDraft(); return; }
+    const which = b.dataset.mark;
+    draft[which] = Math.round(curTime());
+    if (mode !== 'free') mode = 'free';
+    setMsg(''); syncTimes();
+  }));
+
+  document.querySelectorAll('[data-nudge]').forEach(b => b.addEventListener('click', () => {
+    const which = b.dataset.nudge, d = +b.dataset.d;
+    let base = draft[which];
+    if (base == null) base = (draft.videoId === loadedId) ? Math.round(curTime()) : 0;
+    let v = Math.max(0, base + d);
+    const dur = draft.videoId === loadedId ? duration() : 0;
+    if (dur) v = Math.min(Math.floor(dur), v);
+    draft[which] = v;
+    syncTimes(); setMsg('');
+    if (draft.videoId && draft.videoId === loadedId){ mode = 'free'; seek(v); }
+  }));
+
+  ['start', 'end'].forEach(which => {
+    const el = $('#' + which + 'In');
+    el.addEventListener('change', () => {
+      const v = parseTime(el.value);
+      if (v === null){ draft[which] = null; el.classList.remove('bad'); updateLen(); return; }
+      if (Number.isNaN(v)){ el.classList.add('bad'); setMsg('시간은 1:23 또는 1:02:30처럼 분:초로 적어주세요.'); return; }
+      draft[which] = v; el.classList.remove('bad'); setMsg('');
+      el.value = fmt(v); updateLen();
+      if (draft.videoId && draft.videoId === loadedId){ mode = 'free'; seek(v); }
+    });
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') el.blur(); });
+  });
+
+  function validateDraft(){
+    if (!draft.videoId || !parseYouTube($('#url').value) || parseYouTube($('#url').value).id !== draft.videoId){
+      const v = parseYouTube($('#url').value);
+      if (!v) return '유튜브 영상 주소를 확인해주세요.';
+      draft.videoId = v.id;
+    }
+    const sIn = parseTime($('#startIn').value), eIn = parseTime($('#endIn').value);
+    if (Number.isNaN(sIn) || Number.isNaN(eIn)) return '시간은 1:23 또는 1:02:30처럼 분:초로 적어주세요.';
+    draft.start = sIn; draft.end = eIn;
+    if (draft.start == null) return '시작 시간을 정해주세요.';
+    if (draft.end == null) return '끝 시간을 정해주세요.';
+    if (draft.end <= draft.start) return '끝 시간은 시작 시간보다 뒤여야 해요.';
+    const dur = draft.videoId === loadedId ? duration() : 0;
+    if (dur && draft.start >= Math.ceil(dur)) return `시작 시간이 영상 길이(${fmt(dur)})를 넘어요.`;
+    if (dur && draft.end > Math.ceil(dur)) draft.end = Math.ceil(dur);
+    return '';
+  }
+
+  $('#previewBtn').addEventListener('click', () => {
+    const err = validateDraft();
+    if (err){ setMsg(err); return; }
+    setMsg(''); syncTimes();
+    mode = 'preview'; segEnd = draft.end; activeId = null; renderList();
+    loadVideo(draft.videoId, draft.start, true);
+  });
+
+  $('#saveBtn').addEventListener('click', () => {
+    const err = validateDraft();
+    if (err){ setMsg(err); return; }
+    setMsg('');
+    const data = normalize({
+      id: draft.id || uid(), videoId: draft.videoId,
+      title: $('#titleIn').value.trim() || '제목 없는 구간',
+      start: draft.start, end: draft.end, memo: $('#memoIn').value.trim()
+    });
+    if (draft.id){
+      const i = clips.findIndex(c => c.id === draft.id);
+      if (i >= 0){ data.createdAt = clips[i].createdAt; clips[i] = data; }
+      else clips.unshift(data);
+      toast('변경 사항을 저장했어요');
+      resetForm(true);
+    } else {
+      clips.unshift(data);
+      toast('구간을 저장했어요');
+      // keep the same video loaded so the next clip is quick to make
+      draft.start = null; draft.end = null; syncTimes();
+      $('#titleIn').value = ''; $('#memoIn').value = '';
+    }
+    persist();
+    if ($('#list').scrollTop) $('#list').scrollTop = 0;
+    renderList();
+  });
+
+  function startEdit(c){
+    draft = { id: c.id, videoId: c.videoId, start: c.start, end: c.end };
+    $('#url').value = `https://youtu.be/${c.videoId}`;
+    $('#titleIn').value = c.title;
+    $('#memoIn').value = c.memo;
+    syncTimes(); setMsg('');
+    $('#editorTitle').textContent = '구간 수정';
+    $('#saveBtn').textContent = '변경 저장';
+    $('#cancelBtn').hidden = false;
+    setEditorOpen(true);
+    activeId = c.id; mode = 'free'; renderList();
+    loadVideo(c.videoId, c.start, false);
+    if (mqMobile.matches) $('#editor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else $('#titleIn').focus({ preventScroll: true });
+  }
+
+  function resetForm(keepVideo){
+    draft = { id: null, videoId: keepVideo ? null : null, start: null, end: null };
+    $('#url').value = ''; $('#titleIn').value = ''; $('#memoIn').value = '';
+    $('#url').classList.remove('bad');
+    syncTimes(); setMsg('');
+    $('#editorTitle').textContent = '새 구간 만들기';
+    $('#saveBtn').textContent = '구간 저장';
+    $('#cancelBtn').hidden = true;
+  }
+  $('#cancelBtn').addEventListener('click', () => resetForm());
+  $('#resetBtn').addEventListener('click', () => resetForm());
+
+  /* ---------------- backup ---------------- */
+  $('#exportBtn').addEventListener('click', () => {
+    if (!clips.length){ toast('내보낼 구간이 아직 없어요'); return; }
+    const payload = { app: 'yt-clips', version: 1, exportedAt: new Date().toISOString(), clips };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const d = new Date();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `구간보관함-백업-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast(`구간 ${clips.length}개를 백업 파일로 내보냈어요`);
+  });
+
+  let incoming = [];
+  $('#importBtn').addEventListener('click', () => $('#importFile').click());
+  $('#importFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      const arr = Array.isArray(data) ? data : (data && Array.isArray(data.clips) ? data.clips : null);
+      if (!arr) throw new Error('format');
+      incoming = arr.filter(isValidClip).map(normalize);
+      if (!incoming.length){ toast('이 파일에는 불러올 구간이 없어요'); return; }
+      const skipped = arr.length - incoming.length;
+      $('#importInfo').textContent = `백업 파일에서 구간 ${incoming.length}개를 찾았어요` +
+        (skipped ? ` (형식이 맞지 않는 ${skipped}개는 제외)` : '') +
+        `. 지금 목록에는 ${clips.length}개가 있어요. 어떻게 불러올까요?`;
+      $('#importDlg').showModal();
+    } catch (err){
+      toast('백업 파일을 읽지 못했어요. 이 앱에서 내보낸 .json 파일인지 확인해주세요.');
+    }
+  });
+  $('#mergeBtn').addEventListener('click', () => {
+    const have = new Set(clips.map(c => c.id));
+    const add = incoming.filter(c => !have.has(c.id));
+    clips = clips.concat(add);
+    persist(); renderList(); $('#importDlg').close();
+    const dup = incoming.length - add.length;
+    toast(`${add.length}개를 더했어요` + (dup ? ` · 이미 있던 ${dup}개는 건너뜀` : ''));
+  });
+  $('#overwriteBtn').addEventListener('click', () => {
+    const before = clips.slice();
+    clips = incoming.slice(); activeId = null;
+    persist(); renderList(); updateNow(); $('#importDlg').close();
+    toast(`목록을 백업 내용 ${clips.length}개로 바꿨어요`, '되돌리기', () => { clips = before; persist(); renderList(); });
+  });
+  $('#importCancel').addEventListener('click', () => $('#importDlg').close());
+
+  renderList();
+  updateNow();
+})();
+</script>
+</body>
+</html>
