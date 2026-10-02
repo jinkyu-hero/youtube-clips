@@ -14,11 +14,11 @@
   --text:#ecebe7;
   --muted:#a3a6b1;
   --faint:#6f7380;
+  --wave:#4c5263;
   --accent:#f5b83d;
   --accent-ink:#1d1606;
   --accent-soft:rgba(245,184,61,.16);
   --danger:#f07563;
-  --ok:#7fcf9b;
   --radius-lg:14px;
   --radius:9px;
   --radius-sm:6px;
@@ -46,7 +46,7 @@ button{cursor:pointer}
 .main-inner{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 
 /* ---------- side ---------- */
-.side-head{padding:20px 18px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
+.side-head{padding:20px 18px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
 .brand{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .brand h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
 .brand-mark{width:22px;height:22px;flex:none}
@@ -60,6 +60,14 @@ button{cursor:pointer}
 }
 .search input:focus{border-color:var(--accent)}
 .search input::placeholder{color:var(--faint)}
+
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--muted);padding:6px 12px;border-radius:6px;font-size:13.5px;font-weight:600}
+.seg button:hover{color:var(--text)}
+.seg button[aria-pressed="true"]{background:var(--panel-2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+.seg button:disabled{opacity:.45;cursor:not-allowed}
+.seg.full{display:flex}
+.seg.full button{flex:1}
 
 .list{list-style:none;margin:0;padding:8px;overflow:auto;flex:1;min-height:0}
 .clip{
@@ -83,6 +91,8 @@ button{cursor:pointer}
 }
 .thumb{position:relative;width:112px;aspect-ratio:16/9;border-radius:var(--radius-sm);overflow:hidden;background:#000}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.audio{background:var(--panel-2);color:var(--accent)}
+.thumb.audio svg{position:absolute;inset:0;width:100%;height:100%}
 .thumb .len{
   position:absolute;right:4px;bottom:4px;padding:1px 5px;border-radius:4px;
   background:rgba(0,0,0,.78);color:#fff;font-size:11.5px;font-weight:600;
@@ -94,6 +104,7 @@ button{cursor:pointer}
 .meta .title{font-weight:600;font-size:14.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .meta .range{font-size:12.5px;color:var(--accent);font-weight:600}
 .meta .memo{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kind{display:inline-block;font-size:11px;font-weight:700;color:var(--accent-ink);background:var(--accent);border-radius:4px;padding:0 5px;margin-right:6px;vertical-align:1px}
 .clip-actions{display:flex;flex-direction:column;gap:2px;opacity:0;transition:opacity .12s}
 .clip:hover .clip-actions,.clip:focus-within .clip-actions,.clip.active .clip-actions{opacity:1}
 @media (hover:none){.clip-actions{opacity:1}}
@@ -120,9 +131,9 @@ button{cursor:pointer}
 .icon-btn:hover{background:rgba(255,255,255,.07);color:var(--text)}
 .icon-btn.danger:hover{color:var(--danger)}
 .icon-btn svg{width:16px;height:16px}
-.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:disabled,.icon-btn:disabled{opacity:.45;cursor:not-allowed}
 
-/* ---------- player ---------- */
+/* ---------- players ---------- */
 .notice{
   border:1px solid rgba(245,184,61,.4);background:var(--accent-soft);border-radius:var(--radius);
   padding:12px 14px;font-size:13.5px;line-height:1.6;
@@ -141,7 +152,22 @@ button{cursor:pointer}
   background:rgba(20,10,8,.92);border:1px solid rgba(240,117,99,.5);color:#ffd9d2;font-size:13.5px;
 }
 
-/* timeline: the one memorable thing — an editor's tape with in/out marks */
+.audio-box{
+  display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;
+  padding:24px;border-radius:var(--radius-lg);background:var(--panel);border:1px solid var(--line);min-height:150px;
+}
+.big-play{
+  width:72px;height:72px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);
+  display:grid;place-items:center;flex:none;
+}
+.big-play:hover{background:#ffc451}
+.big-play svg{width:28px;height:28px}
+.audio-info{min-width:0;display:flex;flex-direction:column;gap:3px}
+.audio-kind{font-size:12.5px;color:var(--accent);font-weight:700}
+.audio-title{font-size:20px;font-weight:700;line-height:1.3;word-break:break-word}
+.audio-sub{font-size:13.5px;color:var(--muted);word-break:break-all}
+
+/* tape: an editor's strip with in/out marks; becomes a waveform for audio */
 .deck{display:flex;flex-direction:column;gap:8px}
 .now{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-height:24px}
 .now-title{font-weight:650;font-size:16px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -153,11 +179,14 @@ button{cursor:pointer}
     var(--panel);
   border:1px solid var(--line);cursor:pointer;touch-action:none;overflow:hidden;
 }
+.tape.wave{height:76px;background:var(--panel)}
+.tape canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .tape.disabled{cursor:default;opacity:.5}
 .tape-range{
   position:absolute;top:0;bottom:0;background:var(--accent-soft);
   border-left:3px solid var(--accent);border-right:3px solid var(--accent);display:none;
 }
+.tape.wave .tape-range{background:rgba(245,184,61,.08)}
 .tape-range.open-end{border-right-color:transparent}
 .tape-range.open-start{border-left-color:transparent}
 .tape-head{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--text);transform:translateX(-1px);display:none}
@@ -168,8 +197,14 @@ button{cursor:pointer}
 .editor{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg)}
 .editor-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px}
 .editor-head h2{margin:0;font-size:16px;font-weight:700}
-.editor-body{padding:4px 16px 16px;display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line);padding-top:16px}
+.editor-body{padding:16px;display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line)}
 .editor.collapsed .editor-body{display:none}
+.editor[data-source="yt"] [data-only="audio"],
+.editor[data-source="audio"] [data-only="yt"]{display:none}
+.editor.locked [data-lock-hide]{display:none}
+.locked-note{display:none;font-size:13.5px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
+.locked-note b{color:var(--accent)}
+.editor.locked .locked-note{display:block}
 .field{display:flex;flex-direction:column;gap:6px}
 .field label,.field .label{font-size:13px;font-weight:600;color:var(--muted)}
 .input,.textarea{
@@ -181,9 +216,17 @@ button{cursor:pointer}
 .textarea{resize:vertical;min-height:64px;line-height:1.5}
 .url-row{display:flex;gap:8px}
 .url-row .input{flex:1;min-width:0}
+.drop{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:18px 14px;
+  border:1.5px dashed var(--line);border-radius:var(--radius);background:var(--bg);cursor:pointer;text-align:center;
+}
+.drop:hover,.drop.over{border-color:var(--accent)}
+.drop.has-file{border-style:solid}
+.drop svg{width:22px;height:22px;color:var(--accent);margin-bottom:2px}
+.drop-main{font-weight:650;word-break:break-all}
+.drop-sub{font-size:12.5px;color:var(--muted)}
 .times{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .time-card{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:10px;display:flex;flex-direction:column;gap:8px}
-.time-card .label{display:flex;justify-content:space-between;align-items:center}
 .time-input{
   width:100%;border:0;background:transparent;outline:none;font-size:24px;font-weight:700;letter-spacing:-.01em;padding:2px 0;
 }
@@ -200,7 +243,7 @@ button{cursor:pointer}
 }
 .mark:hover{background:rgba(245,184,61,.26)}
 .mark svg{width:14px;height:14px}
-.form-msg{font-size:13.5px;color:var(--danger);min-height:0}
+.form-msg{font-size:13.5px;color:var(--danger)}
 .form-msg:empty{display:none}
 .form-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .form-actions .spacer{flex:1}
@@ -216,7 +259,7 @@ dialog::backdrop{background:rgba(5,6,10,.65)}
 dialog h3{margin:0 0 8px;font-size:17px}
 dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
 .dlg-actions{display:flex;flex-direction:column;gap:8px}
-.dlg-actions .btn{justify-content:flex-start;padding:12px 14px;text-align:left}
+.dlg-actions .btn{justify-content:flex-start;padding:12px 14px;text-align:left;white-space:normal}
 .dlg-actions .btn span{display:block;font-weight:500;color:var(--muted);font-size:12.5px}
 .dlg-actions .btn-primary span{color:rgba(29,22,6,.75)}
 .dlg-actions .btn > div{display:flex;flex-direction:column;gap:2px}
@@ -228,7 +271,7 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
   max-width:calc(100vw - 32px);
 }
 .toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
-.toast button{border:0;background:#17181d;color:#f1efe9;border-radius:7px;padding:5px 10px;font-weight:700;font-size:13px}
+.toast button{border:0;background:#17181d;color:#f1efe9;border-radius:7px;padding:5px 10px;font-weight:700;font-size:13px;flex:none}
 
 /* ---------- responsive ---------- */
 @media (max-width:860px){
@@ -242,6 +285,10 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
   .play-hit{grid-column:2 / 3;grid-template-columns:104px 1fr}
   .thumb{width:104px}
   .clip-actions{opacity:1}
+  .audio-box{grid-template-columns:auto 1fr;gap:16px;padding:18px}
+  .audio-box #audDownload{grid-column:1 / -1}
+  .big-play{width:60px;height:60px}
+  .audio-title{font-size:17px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -273,6 +320,11 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
         <label class="sr-only" for="q">구간 검색</label>
         <input id="q" type="search" placeholder="제목이나 메모로 찾기" autocomplete="off">
       </div>
+      <div class="seg full" id="filterSeg" role="group" aria-label="종류별 보기">
+        <button data-f="all" aria-pressed="true">전체</button>
+        <button data-f="yt" aria-pressed="false">유튜브</button>
+        <button data-f="audio" aria-pressed="false">음성</button>
+      </div>
       <div class="count" id="count"></div>
     </div>
     <ul class="list" id="list"></ul>
@@ -282,7 +334,7 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
     <div class="main-inner">
       <div class="notice" id="fileNotice" hidden></div>
 
-      <div class="player-box">
+      <div class="player-box" id="ytBox">
         <div id="player"></div>
         <div class="placeholder" id="placeholder">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="m10 9 5 3-5 3z" fill="currentColor"/></svg>
@@ -291,25 +343,48 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
         <div class="player-error" id="playerError" hidden></div>
       </div>
 
+      <div class="audio-box" id="audioBox" hidden>
+        <button class="big-play" id="audPlay" aria-label="재생">
+          <svg id="icoPlay" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+          <svg id="icoPause" viewBox="0 0 24 24" fill="currentColor" hidden><rect x="6" y="5" width="4.2" height="14" rx="1"/><rect x="13.8" y="5" width="4.2" height="14" rx="1"/></svg>
+        </button>
+        <div class="audio-info">
+          <div class="audio-kind" id="audKind">음성 파일</div>
+          <div class="audio-title" id="audTitle"></div>
+          <div class="audio-sub" id="audSub"></div>
+        </div>
+        <button class="btn" id="audDownload" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+          구간 내려받기
+        </button>
+      </div>
+      <audio id="aud" preload="auto" playsinline></audio>
+
       <div class="deck">
         <div class="now">
           <div class="now-title" id="nowTitle"></div>
           <div class="now-time" id="nowTime"></div>
         </div>
-        <div class="tape disabled" id="tape" role="slider" aria-label="영상 위치" tabindex="-1">
+        <div class="tape disabled" id="tape" aria-label="재생 위치. 누르면 그 위치로 이동해요">
+          <canvas id="wave"></canvas>
           <div class="tape-range" id="tapeRange"></div>
           <div class="tape-head" id="tapeHead"></div>
         </div>
         <div class="tape-labels"><span>0:00</span><span id="tapeEnd">–</span></div>
       </div>
 
-      <section class="editor" id="editor">
+      <section class="editor" id="editor" data-source="yt">
         <div class="editor-head">
           <h2 id="editorTitle">새 구간 만들기</h2>
           <button class="btn btn-sm" id="toggleEditor" aria-expanded="true">접기</button>
         </div>
         <div class="editor-body">
-          <div class="field">
+          <div class="seg" id="srcSeg" role="group" aria-label="구간 종류">
+            <button data-src="yt" aria-pressed="true">유튜브 주소</button>
+            <button data-src="audio" aria-pressed="false">음성 파일</button>
+          </div>
+
+          <div class="field" data-only="yt">
             <label for="url">유튜브 주소</label>
             <div class="url-row">
               <input class="input" id="url" placeholder="https://youtu.be/…" inputmode="url" autocomplete="off">
@@ -317,7 +392,19 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
             </div>
           </div>
 
-          <div class="times">
+          <div class="field" data-only="audio" data-lock-hide>
+            <span class="label">음성 파일</span>
+            <label class="drop" id="drop">
+              <input type="file" id="audioFile" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.oga,.opus,.flac,.webm" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
+              <span class="drop-main" id="fileName">음성 파일 고르기</span>
+              <span class="drop-sub" id="fileMeta">mp3, m4a, wav 등 · 여기로 끌어다 놓아도 돼요</span>
+            </label>
+          </div>
+
+          <div class="locked-note" id="lockedNote">잘라서 저장한 음성이라 시간은 바꿀 수 없어요. 원본의 <b id="lockedRange"></b> 구간이에요.</div>
+
+          <div class="times" data-lock-hide>
             <div class="time-card">
               <div class="label"><label for="startIn">시작</label></div>
               <input class="time-input" id="startIn" placeholder="0:00" inputmode="numeric" autocomplete="off">
@@ -357,7 +444,7 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
 
           <div class="form-actions">
             <button class="btn btn-primary" id="saveBtn">구간 저장</button>
-            <button class="btn" id="previewBtn">구간 미리 듣기</button>
+            <button class="btn" id="previewBtn" data-lock-hide>구간 미리 듣기</button>
             <span class="len-preview" id="lenPreview"></span>
             <span class="spacer"></span>
             <button class="btn btn-ghost" id="cancelBtn" hidden>수정 취소</button>
@@ -374,7 +461,7 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
   <p id="importInfo"></p>
   <div class="dlg-actions">
     <button class="btn btn-primary" id="mergeBtn"><div>기존 목록에 합치기<span>지금 있는 구간은 그대로 두고, 없는 구간만 더해요</span></div></button>
-    <button class="btn" id="overwriteBtn"><div>덮어쓰기<span>지금 목록을 지우고 백업 내용으로 바꿔요</span></div></button>
+    <button class="btn" id="overwriteBtn"><div>덮어쓰기<span>지금 목록과 저장된 음성을 지우고 백업 내용으로 바꿔요. 되돌릴 수 없어요</span></div></button>
     <button class="btn btn-ghost" id="importCancel">취소</button>
   </div>
 </dialog>
@@ -385,21 +472,37 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
 <script>
 (() => {
   const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
   const KEY = 'ytclips.v1';
   const ID_RE = /^[\w-]{11}$/;
+  const AUDIO_EXT = /\.(mp3|m4a|aac|wav|ogg|oga|opus|flac|webm)$/i;
 
-  /* ---------------- storage ---------------- */
-  const isValidClip = c => c && ID_RE.test(c.videoId) && Number.isFinite(+c.start) && Number.isFinite(+c.end) && +c.end > +c.start;
-  const normalize = c => ({
-    id: typeof c.id === 'string' && c.id ? c.id : uid(),
-    videoId: c.videoId,
-    title: String(c.title || '제목 없는 구간').slice(0, 300),
-    start: Math.max(0, Math.round(+c.start)),
-    end: Math.round(+c.end),
-    memo: String(c.memo || '').slice(0, 5000),
-    createdAt: c.createdAt || Date.now()
-  });
+  /* ================= storage: clip list ================= */
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function isValidClip(c){
+    if (!c || !Number.isFinite(+c.start) || !Number.isFinite(+c.end) || +c.end <= +c.start) return false;
+    return c.type === 'audio' ? (typeof c.id === 'string' && c.id.length > 0) : ID_RE.test(c.videoId);
+  }
+  function normalize(c){
+    const o = {
+      id: typeof c.id === 'string' && c.id ? c.id : uid(),
+      type: c.type === 'audio' ? 'audio' : 'yt',
+      title: String(c.title || '제목 없는 구간').slice(0, 300),
+      start: Math.max(0, Math.round(+c.start)),
+      end: Math.round(+c.end),
+      memo: String(c.memo || '').slice(0, 5000),
+      createdAt: c.createdAt || Date.now()
+    };
+    if (o.type === 'yt') o.videoId = c.videoId;
+    else {
+      o.mime = String(c.mime || 'audio/mpeg');
+      o.size = +c.size || 0;
+      o.fileName = String(c.fileName || '').slice(0, 300);
+      o.peaks = Array.isArray(c.peaks) ? c.peaks.slice(0, 400).map(v => Math.max(0, Math.min(1, +v || 0))) : [];
+      o.length = +c.length > 0 ? +c.length : (o.end - o.start);
+    }
+    return o;
+  }
   function load(){
     try {
       const raw = JSON.parse(localStorage.getItem(KEY) || '[]');
@@ -412,14 +515,52 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
   }
   let clips = load();
 
-  /* ---------------- time helpers ---------------- */
+  /* ================= storage: audio data (IndexedDB) ================= */
+  const idb = (() => {
+    let dbp = null;
+    function open(){
+      if (!dbp) dbp = new Promise((res, rej) => {
+        const r = indexedDB.open('ytclips-audio', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('audio');
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => { dbp = null; rej(r.error); };
+      });
+      return dbp;
+    }
+    async function run(mode, fn){
+      const db = await open();
+      return new Promise((res, rej) => {
+        const t = db.transaction('audio', mode);
+        const req = fn(t.objectStore('audio'));
+        t.oncomplete = () => res(req ? req.result : undefined);
+        t.onerror = () => rej(t.error);
+        t.onabort = () => rej(t.error || new Error('abort'));
+      });
+    }
+    return {
+      get: k => run('readonly', s => s.get(k)),
+      put: (k, v) => run('readwrite', s => s.put(v, k)),
+      del: k => run('readwrite', s => s.delete(k))
+    };
+  })();
+  let persistAsked = false;
+  function requestPersist(){
+    if (persistAsked) return; persistAsked = true;
+    try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+  }
+
+  /* ================= helpers ================= */
   const pad = n => String(n).padStart(2, '0');
   function fmt(sec){
     sec = Math.max(0, Math.round(sec || 0));
     const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
     return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
   }
-  // returns seconds, null for empty, NaN for invalid
+  function fmtSize(b){
+    if (!b) return '0KB';
+    if (b < 1024 * 1024) return Math.max(1, Math.round(b / 1024)) + 'KB';
+    return (b / 1024 / 1024).toFixed(1) + 'MB';
+  }
   function parseTime(str){
     str = String(str || '').trim().replace(/：/g, ':');
     if (!str) return null;
@@ -458,35 +599,143 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
   }
   const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const thumb = id => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+  const baseName = n => String(n || '').replace(/\.[^.]+$/, '');
+  const safeName = n => (String(n || '').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)) || 'clip';
+  function downloadBlob(blob, name){
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  function abToB64(buf){
+    const bytes = new Uint8Array(buf); let s = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  function b64ToAb(b64){
+    const bin = atob(b64); const u = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return u.buffer;
+  }
+  const tick = () => new Promise(r => setTimeout(r, 0));
 
-  /* ---------------- toast ---------------- */
+  /* ================= toast ================= */
   let toastTimer;
-  function toast(msg, actLabel, act){
+  function toast(msg, actLabel, act, sticky){
     const el = $('#toast'), btn = $('#toastAct');
     $('#toastMsg').textContent = msg;
     btn.hidden = !actLabel;
     if (actLabel){ btn.textContent = actLabel; btn.onclick = () => { el.classList.remove('show'); act(); }; }
     el.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), actLabel ? 6000 : 2600);
+    if (!sticky) toastTimer = setTimeout(() => el.classList.remove('show'), actLabel ? 6000 : 2800);
   }
 
-  /* ---------------- file:// notice ---------------- */
+  /* ================= file:// notice ================= */
   const isFile = location.protocol === 'file:';
   if (isFile){
     const n = $('#fileNotice');
     n.hidden = false;
-    n.innerHTML = '<b>파일을 바로 열면 유튜브가 재생을 막을 수 있어요.</b> 재생이 안 되면 이 파일이 있는 폴더에서 터미널을 열고 <code>python3 -m http.server</code>를 실행한 뒤, 브라우저에서 <code>localhost:8000/youtube-clips.html</code>로 열어주세요. 저장한 구간은 여는 주소마다 따로 보관되니, 옮길 때는 백업 내보내기를 써주세요.';
+    n.innerHTML = '<b>파일을 바로 열면 유튜브가 재생을 막을 수 있어요.</b> 재생이 안 되면 이 파일이 있는 폴더에서 터미널을 열고 <code>python3 -m http.server</code>를 실행한 뒤, 브라우저에서 <code>localhost:8000/youtube-clips.html</code>로 열어주세요. 음성 파일 구간은 이대로도 쓸 수 있어요.';
   }
 
-  /* ---------------- player ---------------- */
-  let player = null, ready = false, queued = [];
-  let loadedId = null;           // video currently in player
-  let mode = 'free';             // 'free' | 'clip' | 'preview'
-  let activeId = null;           // clip highlighted in list
-  let segEnd = null;             // end time to stop at
-  let titleFillFor = null;       // videoId whose title should be filled into the form
+  /* ================= audio processing ================= */
+  let audioCtx = null;
+  const getCtx = () => audioCtx || (audioCtx = new (window.AudioContext || window.webkitAudioContext)());
 
+  function computePeaks(buf, bins){
+    const chs = []; for (let c = 0; c < Math.min(2, buf.numberOfChannels); c++) chs.push(buf.getChannelData(c));
+    const len = buf.length, step = len / bins, out = [];
+    for (let b = 0; b < bins; b++){
+      const s = Math.floor(b * step), e = Math.max(s + 1, Math.floor((b + 1) * step));
+      const stride = Math.max(1, Math.floor((e - s) / 600));
+      let m = 0;
+      for (const d of chs) for (let i = s; i < e && i < len; i += stride){ const v = d[i] < 0 ? -d[i] : d[i]; if (v > m) m = v; }
+      out.push(m);
+    }
+    const max = Math.max(...out) || 1;
+    return out.map(v => Math.round(v / max * 100) / 100);
+  }
+
+  async function cutBuffer(buf, s, e){
+    const rate = 44100, ch = Math.min(2, buf.numberOfChannels), dur = e - s;
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const off = new OAC(ch, Math.max(1, Math.ceil(dur * rate)), rate);
+    const src = off.createBufferSource(); src.buffer = buf;
+    const g = off.createGain();
+    if (dur > 0.05){ // tiny fades so the cut doesn't click
+      g.gain.setValueAtTime(0, 0); g.gain.linearRampToValueAtTime(1, 0.012);
+      g.gain.setValueAtTime(1, dur - 0.012); g.gain.linearRampToValueAtTime(0, dur);
+    }
+    src.connect(g); g.connect(off.destination);
+    src.start(0, s, dur);
+    return await off.startRendering();
+  }
+
+  function loadScript(src){
+    return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  }
+  let lameP = null;
+  function loadLame(){
+    if (window.lamejs) return Promise.resolve();
+    if (!lameP){
+      lameP = loadScript('https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js')
+        .catch(() => loadScript('https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js'))
+        .then(() => { if (!window.lamejs) throw new Error('lame'); })
+        .catch(e => { lameP = null; throw e; });
+    }
+    return lameP;
+  }
+  function toI16(f){
+    const o = new Int16Array(f.length);
+    for (let i = 0; i < f.length; i++){ const s = f[i] < -1 ? -1 : f[i] > 1 ? 1 : f[i]; o[i] = s < 0 ? s * 0x8000 : s * 0x7fff; }
+    return o;
+  }
+  async function encodeMp3(ab, onProgress){
+    const ch = ab.numberOfChannels;
+    const enc = new lamejs.Mp3Encoder(ch, ab.sampleRate, ch > 1 ? 160 : 96);
+    const L = toI16(ab.getChannelData(0)), R = ch > 1 ? toI16(ab.getChannelData(1)) : null;
+    const parts = [], block = 1152;
+    for (let i = 0, n = 0; i < L.length; i += block, n++){
+      const d = R ? enc.encodeBuffer(L.subarray(i, i + block), R.subarray(i, i + block)) : enc.encodeBuffer(L.subarray(i, i + block));
+      if (d.length) parts.push(new Uint8Array(d));
+      if (n % 150 === 0){ onProgress && onProgress(Math.round(i / L.length * 100)); await tick(); }
+    }
+    const e = enc.flush(); if (e.length) parts.push(new Uint8Array(e));
+    return new Blob(parts, { type: 'audio/mpeg' });
+  }
+  function encodeWav(ab){
+    const ch = ab.numberOfChannels, rate = ab.sampleRate, n = ab.length;
+    const buf = new ArrayBuffer(44 + n * ch * 2), v = new DataView(buf);
+    const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * ch * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, ch, true); v.setUint32(24, rate, true);
+    v.setUint32(28, rate * ch * 2, true); v.setUint16(32, ch * 2, true); v.setUint16(34, 16, true);
+    w(36, 'data'); v.setUint32(40, n * ch * 2, true);
+    const data = []; for (let c = 0; c < ch; c++) data.push(ab.getChannelData(c));
+    let o = 44;
+    for (let i = 0; i < n; i++) for (let c = 0; c < ch; c++){
+      const s = Math.max(-1, Math.min(1, data[c][i])); v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true); o += 2;
+    }
+    return new Blob([buf], { type: 'audio/wav' });
+  }
+  async function encodeAudio(ab, onProgress){
+    try { await loadLame(); return await encodeMp3(ab, onProgress); }
+    catch (e) { console.warn('mp3 encoder unavailable, saving as wav', e); return encodeWav(ab); }
+  }
+
+  /* ================= players & view ================= */
+  const aud = $('#aud');
+  let view = 'none';            // 'none' | 'yt' | 'audio'
+  let audLoaded = null;         // {kind:'source'} | {kind:'clip', id}
+  let clipUrl = null;
+  let mode = 'free';            // 'free' | 'clip' | 'preview'
+  let activeId = null;
+  let segEnd = null;
+
+  // YouTube
+  let player = null, ready = false, queued = [], loadedId = null, titleFillFor = null;
   const whenReady = fn => ready ? fn() : queued.push(fn);
   window.onYouTubeIframeAPIReady = () => {
     const vars = { playsinline: 1, rel: 0, modestbranding: 1 };
@@ -495,18 +744,18 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
       width: '100%', height: '100%', playerVars: vars,
       events: {
         onReady: () => { ready = true; queued.forEach(f => f()); queued = []; },
-        onStateChange: onState,
-        onError: onError
+        onStateChange: onYtState,
+        onError: onYtError
       }
     });
   };
-  const s = document.createElement('script');
-  s.src = 'https://www.youtube.com/iframe_api';
-  s.onerror = () => showError('유튜브 플레이어를 불러오지 못했어요. 인터넷 연결을 확인해주세요.');
-  document.head.appendChild(s);
+  const ytScript = document.createElement('script');
+  ytScript.src = 'https://www.youtube.com/iframe_api';
+  ytScript.onerror = () => showYtError('유튜브 플레이어를 불러오지 못했어요. 인터넷 연결을 확인해주세요.');
+  document.head.appendChild(ytScript);
 
-  function showError(msg){ const e = $('#playerError'); e.textContent = msg; e.hidden = !msg; }
-  function onError(ev){
+  function showYtError(msg){ const e = $('#playerError'); e.textContent = msg; e.hidden = !msg; }
+  function onYtError(ev){
     const map = {
       2: '영상 주소가 올바르지 않아요.',
       5: '이 브라우저에서 영상을 재생할 수 없어요.',
@@ -515,23 +764,30 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
       150: '영상 주인이 다른 사이트에서의 재생을 막아둔 영상이에요.',
       153: isFile ? '파일을 바로 열어서 유튜브가 재생을 막았어요. 위 안내대로 localhost 주소로 열어주세요.' : '유튜브가 이 페이지에서의 재생을 막았어요.'
     };
-    showError(map[ev.data] || `영상을 재생하지 못했어요 (오류 ${ev.data}).`);
+    showYtError(map[ev.data] || `영상을 재생하지 못했어요 (오류 ${ev.data}).`);
   }
-  function onState(ev){
+  function onYtState(ev){
+    if (ev.data === YT.PlayerState.PLAYING) aud.pause();
     if (ev.data === YT.PlayerState.PLAYING || ev.data === YT.PlayerState.CUED || ev.data === YT.PlayerState.PAUSED){
-      showError('');
+      showYtError('');
       if (titleFillFor && titleFillFor === loadedId){
         const t = player.getVideoData && player.getVideoData().title;
         if (t){
-          if (!$('#titleIn').value.trim()) $('#titleIn').value = t;
+          if (!$('#titleIn').value.trim() && draft.source === 'yt') $('#titleIn').value = t;
           titleFillFor = null;
+          updateNow();
         }
       }
     }
   }
+  const ytTime = () => (ready && loadedId && player.getCurrentTime) ? player.getCurrentTime() || 0 : 0;
+  const ytDur = () => (ready && loadedId && player.getDuration) ? player.getDuration() || 0 : 0;
+  const ytPlaying = () => ready && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING;
+
   function loadVideo(id, start, autoplay){
+    setView('yt');
     whenReady(() => {
-      showError('');
+      showYtError('');
       $('#placeholder').hidden = true;
       if (loadedId === id){
         player.seekTo(start || 0, true);
@@ -543,57 +799,194 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
       }
     });
   }
-  const curTime = () => (ready && loadedId && player.getCurrentTime) ? player.getCurrentTime() || 0 : 0;
-  const duration = () => (ready && loadedId && player.getDuration) ? player.getDuration() || 0 : 0;
-  const isPlaying = () => ready && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING;
 
-  function seek(t){
-    whenReady(() => {
-      if (!loadedId) return;
-      const wasPlaying = isPlaying();
-      player.seekTo(Math.max(0, t), true);
-      if (!wasPlaying) player.pauseVideo();
-    });
+  function setView(v){
+    if (v === view) return;
+    if (v !== 'yt' && ready && loadedId && ytPlaying()) player.pauseVideo();
+    if (v !== 'audio') aud.pause();
+    view = v;
+    $('#ytBox').hidden = v === 'audio';
+    $('#audioBox').hidden = v !== 'audio';
+    $('#tape').classList.toggle('wave', v === 'audio');
+    lastWaveKey = '';
   }
 
-  /* ---------------- clip playback ---------------- */
-  function playClip(c){
-    activeId = c.id;
-    mode = 'clip';
-    segEnd = c.end;
+  // one interface over both players
+  const M = {
+    time(){ return view === 'audio' ? (aud.currentTime || 0) : view === 'yt' ? ytTime() : 0; },
+    dur(){ if (view === 'audio'){ const d = aud.duration; return Number.isFinite(d) ? d : 0; } return view === 'yt' ? ytDur() : 0; },
+    playing(){ return view === 'audio' ? (!aud.paused && !aud.ended) : (view === 'yt' && ytPlaying()); },
+    pause(){ if (view === 'audio') aud.pause(); else if (view === 'yt' && ready && loadedId) player.pauseVideo(); },
+    seek(t){
+      t = Math.max(0, t);
+      if (view === 'audio'){ whenAudMeta(() => { aud.currentTime = Math.min(t, M.dur() || t); }); }
+      else if (view === 'yt') whenReady(() => {
+        if (!loadedId) return;
+        const was = ytPlaying();
+        player.seekTo(t, true);
+        if (!was) player.pauseVideo();
+      });
+    }
+  };
+
+  // audio element
+  let silentUrl = null;
+  function setAudSrc(url){ delete aud.dataset.silent; aud.src = url; }
+  function whenAudMeta(fn){ if (aud.readyState >= 1) fn(); else aud.addEventListener('loadedmetadata', fn, { once: true }); }
+  // unlock the audio element on the first tap so later async plays are allowed on phones
+  document.addEventListener('pointerdown', function unlock(){
+    document.removeEventListener('pointerdown', unlock, true);
+    if (aud.getAttribute('src')) return;
+    try {
+      const ab = new AudioBuffer({ length: 441, numberOfChannels: 1, sampleRate: 44100 });
+      silentUrl = URL.createObjectURL(encodeWav(ab));
+      aud.dataset.silent = '1'; aud.src = silentUrl;
+      aud.play().then(() => { if (aud.dataset.silent) aud.pause(); }).catch(() => {});
+    } catch (e) {}
+  }, true);
+
+  function syncPlayIcon(){
+    const p = !aud.paused && !aud.ended;
+    $('#icoPlay').toggleAttribute('hidden', p); $('#icoPause').toggleAttribute('hidden', !p);
+    $('#audPlay').setAttribute('aria-label', p ? '일시정지' : '재생');
+  }
+  ['play', 'pause', 'ended'].forEach(ev => aud.addEventListener(ev, syncPlayIcon));
+  aud.addEventListener('play', () => { if (ready && loadedId && ytPlaying()) player.pauseVideo(); });
+  aud.addEventListener('ended', () => { mode = 'free'; });
+  aud.addEventListener('error', () => {
+    if (aud.dataset.silent || !aud.getAttribute('src')) return;
+    if (audLoaded && audLoaded.kind === 'source') setMsg('이 브라우저에서 재생할 수 없는 음성 형식이에요. mp3나 m4a 파일로 시도해주세요.');
+    else toast('이 음성 구간을 재생하지 못했어요.');
+  });
+  $('#audPlay').addEventListener('click', () => {
+    if (!aud.getAttribute('src') || aud.dataset.silent) return;
+    if (aud.paused || aud.ended){
+      if (aud.ended) aud.currentTime = 0;
+      if (mode === 'preview' && segEnd != null && aud.currentTime >= segEnd - 0.1) mode = 'free';
+      aud.play().catch(() => {});
+    } else aud.pause();
+  });
+
+  function updateAudioBox(){
+    if (!audLoaded) return;
+    if (audLoaded.kind === 'source'){
+      $('#audKind').textContent = '원본 음성 파일';
+      $('#audTitle').textContent = src ? baseName(src.name) : '';
+      $('#audSub').textContent = '재생하면서 시작과 끝을 찍어 구간을 만드세요';
+      $('#audDownload').hidden = true;
+    } else {
+      const c = clips.find(x => x.id === audLoaded.id);
+      $('#audKind').textContent = '음성 구간';
+      $('#audTitle').textContent = c ? c.title : '';
+      $('#audSub').textContent = c ? `${c.fileName ? c.fileName + '의 ' : '원본의 '}${fmt(c.start)} – ${fmt(c.end)}` : '';
+      $('#audDownload').hidden = !c;
+    }
+  }
+
+  function showSourceAudio(seekTo){
+    if (!src) return;
+    if (!(audLoaded && audLoaded.kind === 'source')){ setAudSrc(src.url); audLoaded = { kind: 'source' }; }
+    setView('audio'); updateAudioBox(); updateNow();
+    if (seekTo != null) M.seek(seekTo);
+  }
+
+  /* ================= clip playback ================= */
+  function playClip(c){ c.type === 'audio' ? playAudioClip(c, true) : playYtClip(c); }
+  function playYtClip(c){
+    aud.pause();
+    activeId = c.id; mode = 'clip'; segEnd = c.end;
     loadVideo(c.videoId, c.start, true);
-    renderList();
-    updateNow();
+    renderList(); updateNow();
   }
+  async function playAudioClip(c, autoplay){
+    let rec = null;
+    try { rec = await idb.get(c.id); } catch (e) {}
+    if (!rec){ toast('이 구간의 음성 데이터를 찾지 못했어요. 백업에서 다시 불러와주세요.'); return; }
+    if (clipUrl) URL.revokeObjectURL(clipUrl);
+    clipUrl = URL.createObjectURL(new Blob([rec.buf], { type: rec.mime }));
+    setAudSrc(clipUrl);
+    audLoaded = { kind: 'clip', id: c.id };
+    activeId = c.id; mode = 'free'; segEnd = null;
+    setView('audio'); updateAudioBox(); renderList(); updateNow();
+    if (autoplay) aud.play().catch(() => {});
+  }
+  async function downloadClip(c){
+    let rec = null;
+    try { rec = await idb.get(c.id); } catch (e) {}
+    if (!rec){ toast('이 구간의 음성 데이터를 찾지 못했어요.'); return; }
+    const ext = /wav/.test(rec.mime) ? 'wav' : 'mp3';
+    downloadBlob(new Blob([rec.buf], { type: rec.mime }), `${safeName(c.title)}.${ext}`);
+  }
+  $('#audDownload').addEventListener('click', () => {
+    const c = audLoaded && audLoaded.kind === 'clip' && clips.find(x => x.id === audLoaded.id);
+    if (c) downloadClip(c);
+  });
 
   // ticker: stops at segment end, drives the tape
   setInterval(() => {
-    if (!ready || !loadedId) return;
-    const t = curTime();
-    if ((mode === 'clip' || mode === 'preview') && segEnd != null && isPlaying() && t >= segEnd - 0.05){
-      player.pauseVideo();
-      mode = 'free';
+    if (view === 'none') return;
+    const t = M.time();
+    if ((mode === 'clip' || mode === 'preview') && segEnd != null && M.playing() && t >= segEnd - 0.05){
+      M.pause(); mode = 'free';
     }
     drawTape(t);
   }, 120);
 
-  /* ---------------- tape ---------------- */
+  /* ================= tape ================= */
   function currentRange(){
-    if (editorOpen && draft.videoId && draft.videoId === loadedId && (draft.start != null || draft.end != null))
+    if (editorOpen && !draft.locked && draftOnScreen() && (draft.start != null || draft.end != null))
       return { start: draft.start, end: draft.end };
     const c = clips.find(x => x.id === activeId);
-    if (c && c.videoId === loadedId) return { start: c.start, end: c.end };
+    if (c && c.type === 'yt' && view === 'yt' && c.videoId === loadedId) return { start: c.start, end: c.end };
     return null;
   }
+  function currentPeaks(){
+    if (view !== 'audio' || !audLoaded) return null;
+    if (audLoaded.kind === 'source') return src && src.peaks;
+    const c = clips.find(x => x.id === audLoaded.id);
+    return c && c.peaks;
+  }
+  let lastWaveKey = '';
+  function drawWave(rg, d){
+    const cv = $('#wave'), tape = $('#tape');
+    const w = tape.clientWidth, h = tape.clientHeight, dpr = window.devicePixelRatio || 1;
+    const peaks = currentPeaks();
+    const key = [view, w, h, peaks ? peaks.length : 0, audLoaded && audLoaded.kind, audLoaded && audLoaded.id, rg ? rg.start + '-' + rg.end : '', Math.round(d)].join('|');
+    if (key === lastWaveKey) return;
+    lastWaveKey = key;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)){ cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const g = cv.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    if (view !== 'audio' || !peaks || !peaks.length) return;
+    const css = getComputedStyle(document.documentElement);
+    const base = css.getPropertyValue('--wave').trim(), hi = css.getPropertyValue('--accent').trim();
+    const barW = 2, gap = 1, n = Math.max(1, Math.floor(w / (barW + gap)));
+    const mid = h / 2;
+    for (let i = 0; i < n; i++){
+      const a = Math.floor(i / n * peaks.length), b = Math.max(a + 1, Math.floor((i + 1) / n * peaks.length));
+      let m = 0; for (let j = a; j < b && j < peaks.length; j++) if (peaks[j] > m) m = peaks[j];
+      const bh = Math.max(2, m * (h - 10));
+      const x = i * (barW + gap);
+      let inRange = false;
+      if (rg && d){
+        const t = (i + 0.5) / n * d;
+        inRange = t >= (rg.start != null ? rg.start : 0) && t <= (rg.end != null ? rg.end : d);
+      }
+      g.fillStyle = inRange ? hi : base;
+      g.fillRect(x, mid - bh / 2, barW, bh);
+    }
+  }
   function drawTape(t){
-    const d = duration(), tape = $('#tape'), r = $('#tapeRange'), h = $('#tapeHead');
+    const d = M.dur(), tape = $('#tape'), r = $('#tapeRange'), hd = $('#tapeHead');
     tape.classList.toggle('disabled', !d);
     $('#tapeEnd').textContent = d ? fmt(d) : '–';
     $('#nowTime').innerHTML = d ? `<b>${fmt(t)}</b> / ${fmt(d)}` : '';
-    if (!d){ r.style.display = h.style.display = 'none'; return; }
-    h.style.display = 'block';
-    h.style.left = Math.min(100, t / d * 100) + '%';
-    const rg = currentRange();
+    const rg = d ? currentRange() : null;
+    drawWave(rg, d);
+    if (!d){ r.style.display = hd.style.display = 'none'; return; }
+    hd.style.display = 'block';
+    hd.style.left = Math.min(100, t / d * 100) + '%';
     if (!rg){ r.style.display = 'none'; return; }
     const a = rg.start != null ? rg.start : 0, b = rg.end != null ? rg.end : d;
     if (b <= a){ r.style.display = 'none'; return; }
@@ -604,79 +997,106 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
     r.classList.toggle('open-end', rg.end == null);
   }
   function tapeSeek(e){
-    const d = duration(); if (!d) return;
+    const d = M.dur(); if (!d) return;
     const rect = $('#tape').getBoundingClientRect();
     const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
     if (mode === 'clip' || mode === 'preview') mode = 'free';
-    seek(ratio * d);
+    M.seek(ratio * d);
   }
   let tapeDrag = false;
   $('#tape').addEventListener('pointerdown', e => { tapeDrag = true; $('#tape').setPointerCapture(e.pointerId); tapeSeek(e); });
   $('#tape').addEventListener('pointermove', e => { if (tapeDrag) tapeSeek(e); });
   $('#tape').addEventListener('pointerup', () => { tapeDrag = false; });
   $('#tape').addEventListener('pointercancel', () => { tapeDrag = false; });
+  window.addEventListener('resize', () => { lastWaveKey = ''; });
 
   function updateNow(){
     const c = clips.find(x => x.id === activeId);
-    $('#nowTitle').textContent = c ? c.title : (editorOpen && draft.videoId === loadedId && $('#titleIn').value) || '';
+    let t = '';
+    if (c) t = c.title;
+    else if (draftOnScreen()) t = $('#titleIn').value.trim() || (draft.source === 'audio' && src ? baseName(src.name) : '');
+    $('#nowTitle').textContent = t;
   }
 
-  /* ---------------- list ---------------- */
-  let query = '';
-  let sortable = null;
+  /* ================= list ================= */
+  let query = '', filter = 'all', sortable = null;
   const matches = c => {
+    if (filter !== 'all' && c.type !== filter) return false;
     if (!query) return true;
     const q = query.toLowerCase();
     return c.title.toLowerCase().includes(q) || c.memo.toLowerCase().includes(q);
   };
+  function waveSvg(peaks){
+    const n = 28, W = 112, H = 63, out = [];
+    const p = peaks && peaks.length ? peaks : new Array(n).fill(.25);
+    for (let i = 0; i < n; i++){
+      const a = Math.floor(i / n * p.length), b = Math.max(a + 1, Math.floor((i + 1) / n * p.length));
+      let m = 0; for (let j = a; j < b && j < p.length; j++) if (p[j] > m) m = p[j];
+      const h = Math.max(2, m * 34), x = 8 + i * (W - 16) / n;
+      out.push(`<rect x="${x.toFixed(1)}" y="${(27 - h / 2).toFixed(1)}" width="2" height="${h.toFixed(1)}" rx="1"/>`);
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" fill="currentColor" aria-hidden="true">${out.join('')}</svg>`;
+  }
+  function itemHtml(c){
+    const isA = c.type === 'audio';
+    const len = isA ? c.length : c.end - c.start;
+    const th = isA
+      ? `<span class="thumb audio">${waveSvg(c.peaks)}<span class="len">${fmt(len)}</span></span>`
+      : `<span class="thumb"><img src="${thumb(c.videoId)}" alt="" loading="lazy"><span class="len">${fmt(len)}</span></span>`;
+    return `
+      <li class="clip${c.id === activeId ? ' active' : ''}" data-id="${c.id}">
+        <button class="drag" aria-label="끌어서 순서 바꾸기" tabindex="-1">
+          <svg viewBox="0 0 12 18" fill="currentColor"><circle cx="3" cy="3" r="1.5"/><circle cx="9" cy="3" r="1.5"/><circle cx="3" cy="9" r="1.5"/><circle cx="9" cy="9" r="1.5"/><circle cx="3" cy="15" r="1.5"/><circle cx="9" cy="15" r="1.5"/></svg>
+        </button>
+        <button class="play-hit" data-act="play" aria-label="${esc(c.title)} 재생">
+          ${th}
+          <span class="meta">
+            <span class="title">${esc(c.title)}</span>
+            <span class="range">${isA ? '<span class="kind">음성</span>' : ''}${fmt(c.start)} – ${fmt(c.end)}</span>
+            ${c.memo ? `<span class="memo">${esc(c.memo)}</span>` : ''}
+          </span>
+        </button>
+        <div class="clip-actions">
+          <button class="icon-btn" data-act="edit" aria-label="수정" title="수정">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>
+          </button>
+          <button class="icon-btn danger" data-act="del" aria-label="삭제" title="삭제">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+          </button>
+        </div>
+      </li>`;
+  }
   function renderList(){
     const list = $('#list');
     const shown = clips.filter(matches);
-    $('#count').textContent = query
-      ? `${clips.length}개 중 ${shown.length}개`
-      : (clips.length ? `구간 ${clips.length}개 · 손잡이를 끌어 순서를 바꿀 수 있어요` : '');
-    list.classList.toggle('no-sort', !!query);
+    const narrowed = !!query || filter !== 'all';
+    const audioBytes = clips.reduce((s, c) => s + (c.type === 'audio' ? c.size : 0), 0);
+    $('#count').textContent = !clips.length ? '' :
+      narrowed ? `${clips.length}개 중 ${shown.length}개`
+               : `구간 ${clips.length}개` + (audioBytes ? ` · 음성 ${fmtSize(audioBytes)}` : '');
+    list.classList.toggle('no-sort', narrowed);
     if (!clips.length){
-      list.innerHTML = `<li class="empty"><strong>아직 저장한 구간이 없어요</strong>유튜브 주소를 불러오고, 영상을 보면서 시작과 끝을 찍은 다음 저장하세요.</li>`;
+      list.innerHTML = `<li class="empty"><strong>아직 저장한 구간이 없어요</strong>유튜브 주소나 음성 파일을 불러오고, 재생하면서 시작과 끝을 찍은 다음 저장하세요.</li>`;
     } else if (!shown.length){
-      list.innerHTML = `<li class="empty"><strong>‘${esc(query)}’에 맞는 구간이 없어요</strong>다른 단어로 찾아보세요.</li>`;
+      const what = query ? `‘${esc(query)}’에 맞는 ` : '';
+      const kind = filter === 'yt' ? '유튜브 ' : filter === 'audio' ? '음성 ' : '';
+      list.innerHTML = `<li class="empty"><strong>${what}${kind}구간이 없어요</strong>${query ? '다른 단어로 찾아보세요.' : '다른 종류를 골라보세요.'}</li>`;
     } else {
-      list.innerHTML = shown.map(c => `
-        <li class="clip${c.id === activeId ? ' active' : ''}" data-id="${c.id}">
-          <button class="drag" aria-label="끌어서 순서 바꾸기" tabindex="-1">
-            <svg viewBox="0 0 12 18" fill="currentColor"><circle cx="3" cy="3" r="1.5"/><circle cx="9" cy="3" r="1.5"/><circle cx="3" cy="9" r="1.5"/><circle cx="9" cy="9" r="1.5"/><circle cx="3" cy="15" r="1.5"/><circle cx="9" cy="15" r="1.5"/></svg>
-          </button>
-          <button class="play-hit" data-act="play" aria-label="${esc(c.title)} 재생">
-            <span class="thumb"><img src="${thumb(c.videoId)}" alt="" loading="lazy"><span class="len">${fmt(c.end - c.start)}</span></span>
-            <span class="meta">
-              <span class="title">${esc(c.title)}</span>
-              <span class="range">${fmt(c.start)} – ${fmt(c.end)}</span>
-              ${c.memo ? `<span class="memo">${esc(c.memo)}</span>` : ''}
-            </span>
-          </button>
-          <div class="clip-actions">
-            <button class="icon-btn" data-act="edit" aria-label="수정" title="수정">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>
-            </button>
-            <button class="icon-btn danger" data-act="del" aria-label="삭제" title="삭제">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
-            </button>
-          </div>
-        </li>`).join('');
+      list.innerHTML = shown.map(itemHtml).join('');
     }
     if (window.Sortable){
       if (!sortable){
         sortable = Sortable.create(list, {
           handle: '.drag', animation: 150, draggable: '.clip',
           onEnd: e => {
-            if (query || e.oldIndex === e.newIndex) return;
+            if (query || filter !== 'all' || e.oldIndex === e.newIndex) return;
             const [m] = clips.splice(e.oldIndex, 1);
             clips.splice(e.newIndex, 0, m);
             persist();
           }
         });
       }
-      sortable.option('disabled', !!query);
+      sortable.option('disabled', narrowed);
     }
   }
   $('#list').addEventListener('click', e => {
@@ -688,23 +1108,39 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
     else if (act === 'del') removeClip(c);
   });
   $('#q').addEventListener('input', e => { query = e.target.value.trim(); renderList(); });
+  $$('#filterSeg button').forEach(b => b.addEventListener('click', () => {
+    filter = b.dataset.f;
+    $$('#filterSeg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    renderList();
+  }));
 
   function removeClip(c){
     const idx = clips.indexOf(c);
     clips.splice(idx, 1);
     persist();
-    if (draft.id === c.id) resetForm(true);
+    const recP = c.type === 'audio'
+      ? idb.get(c.id).then(r => idb.del(c.id).then(() => r)).catch(() => null)
+      : Promise.resolve(null);
+    if (draft.id === c.id) resetForm(false);
+    if (audLoaded && audLoaded.kind === 'clip' && audLoaded.id === c.id){
+      aud.pause(); aud.removeAttribute('src'); aud.load(); audLoaded = null;
+      setView(loadedId ? 'yt' : 'none');
+    }
     if (activeId === c.id) activeId = null;
     renderList(); updateNow();
-    toast('구간을 삭제했어요', '되돌리기', () => {
+    toast('구간을 삭제했어요', '되돌리기', async () => {
+      const r = await recP;
+      if (r) { try { await idb.put(c.id, r); } catch (e) {} }
       clips.splice(Math.min(idx, clips.length), 0, c);
       persist(); renderList();
     });
   }
 
-  /* ---------------- editor ---------------- */
+  /* ================= editor ================= */
   let editorOpen = true;
-  let draft = { id: null, videoId: null, start: null, end: null };
+  let src = null; // current source audio file: {file, name, url, decodeP, buffer, peaks}
+  const newDraft = source => ({ id: null, source, videoId: null, start: null, end: null, locked: false });
+  let draft = newDraft('yt');
   const mqMobile = window.matchMedia('(max-width: 860px)');
 
   function setEditorOpen(open){
@@ -718,6 +1154,31 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
 
   function setMsg(m){ $('#formMsg').textContent = m || ''; }
 
+  function applySourceUi(){
+    const ed = $('#editor');
+    ed.dataset.source = draft.source;
+    ed.classList.toggle('locked', !!draft.locked);
+    $$('#srcSeg button').forEach(b => {
+      b.setAttribute('aria-pressed', b.dataset.src === draft.source);
+      b.disabled = !!draft.id;
+    });
+    $('#titleIn').placeholder = draft.source === 'yt' ? '영상을 불러오면 영상 제목이 들어가요' : '비워두면 파일 이름으로 저장돼요';
+    $('#previewBtn').textContent = draft.source === 'yt' ? '구간 미리 보기' : '구간 미리 듣기';
+    if (draft.source === 'audio') loadLame().catch(() => {});
+  }
+  $$('#srcSeg button').forEach(b => b.addEventListener('click', () => {
+    if (draft.id || draft.source === b.dataset.src) return;
+    draft.source = b.dataset.src;
+    draft.start = draft.end = null; syncTimes(); setMsg('');
+    applySourceUi();
+    if (draft.source === 'audio'){ if (src){ activeId = null; mode = 'free'; renderList(); showSourceAudio(); } }
+    else if (view === 'audio'){
+      if (draft.videoId) loadVideo(draft.videoId, 0, false); else setView(loadedId ? 'yt' : 'none');
+      activeId = null; renderList();
+    }
+    updateNow();
+  }));
+
   function syncTimes(){
     $('#startIn').value = draft.start != null ? fmt(draft.start) : '';
     $('#endIn').value = draft.end != null ? fmt(draft.end) : '';
@@ -726,10 +1187,30 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
   }
   function updateLen(){
     const el = $('#lenPreview');
-    if (draft.start != null && draft.end != null && draft.end > draft.start) el.innerHTML = `길이 <b>${fmt(draft.end - draft.start)}</b>`;
+    if (!draft.locked && draft.start != null && draft.end != null && draft.end > draft.start) el.innerHTML = `길이 <b>${fmt(draft.end - draft.start)}</b>`;
     else el.textContent = '';
   }
 
+  function draftOnScreen(){
+    if (draft.source === 'yt') return view === 'yt' && !!draft.videoId && loadedId === draft.videoId;
+    return view === 'audio' && !!src && !!audLoaded && audLoaded.kind === 'source' && !draft.locked;
+  }
+  // puts the draft's media in the player; returns true if it was already there
+  function bringDraftOnScreen(){
+    if (draftOnScreen()) return true;
+    if (draft.source === 'yt'){
+      if (!draft.videoId){ loadFromUrl(); return false; }
+      activeId = null; renderList();
+      loadVideo(draft.videoId, draft.start || 0, false);
+    } else {
+      if (!src){ setMsg('먼저 음성 파일을 골라주세요.'); return false; }
+      activeId = null; mode = 'free'; renderList();
+      showSourceAudio(draft.start || 0);
+    }
+    return false;
+  }
+
+  /* --- YouTube source --- */
   function loadFromUrl(){
     const v = parseYouTube($('#url').value);
     if (!v){ setMsg('유튜브 영상 주소를 확인해주세요. 예: https://youtu.be/영상ID'); $('#url').classList.add('bad'); return false; }
@@ -740,40 +1221,71 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
       draft.start = v.t != null ? v.t : null; draft.end = null; syncTimes();
       if (!$('#titleIn').value.trim()) titleFillFor = v.id;
     }
-    if (mode !== 'free') mode = 'free';
-    activeId = null; renderList();
+    mode = 'free'; activeId = null; renderList();
     loadVideo(v.id, draft.start || 0, false);
+    updateNow();
     return true;
   }
   $('#loadBtn').addEventListener('click', loadFromUrl);
   $('#url').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); loadFromUrl(); } });
   $('#url').addEventListener('paste', () => setTimeout(() => { if (parseYouTube($('#url').value)) loadFromUrl(); }, 0));
 
-  function ensureVideoForDraft(){
-    if (!draft.videoId){ if (!loadFromUrl()) return false; }
-    if (draft.videoId !== loadedId){ loadVideo(draft.videoId, draft.start || 0, false); return false; }
-    return true;
+  /* --- audio file source --- */
+  function pickFile(file){
+    if (!file) return;
+    if (!/^audio\//.test(file.type) && !AUDIO_EXT.test(file.name)){
+      setMsg('음성 파일만 고를 수 있어요 (mp3, m4a, wav 등).'); return;
+    }
+    if (src && src.url) URL.revokeObjectURL(src.url);
+    src = { file, name: file.name, url: URL.createObjectURL(file), buffer: null, peaks: null, decodeP: null };
+    const mine = src;
+    audLoaded = null;
+    draft.start = draft.end = null; syncTimes(); setMsg('');
+    $('#drop').classList.add('has-file');
+    $('#fileName').textContent = file.name;
+    $('#fileMeta').textContent = `${fmtSize(file.size)} · 파형 읽는 중… · 다른 파일을 고르려면 누르세요`;
+    activeId = null; mode = 'free'; renderList();
+    showSourceAudio(0);
+    mine.decodeP = file.arrayBuffer()
+      .then(ab => getCtx().decodeAudioData(ab))
+      .then(buf => {
+        mine.buffer = buf; mine.peaks = computePeaks(buf, 800);
+        if (src === mine){ $('#fileMeta').textContent = `${fmtSize(file.size)} · 길이 ${fmt(buf.duration)} · 다른 파일을 고르려면 누르세요`; lastWaveKey = ''; }
+        return buf;
+      });
+    mine.decodeP.catch(() => {
+      if (src === mine) $('#fileMeta').textContent = `${fmtSize(file.size)} · 이 파일은 자를 수 없을 수 있어요 · 다른 파일을 고르려면 누르세요`;
+    });
   }
+  $('#audioFile').addEventListener('change', e => { pickFile(e.target.files[0]); e.target.value = ''; });
+  const drop = $('#drop');
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('over')));
+  drop.addEventListener('drop', e => { e.preventDefault(); pickFile(e.dataTransfer.files[0]); });
 
-  document.querySelectorAll('[data-mark]').forEach(b => b.addEventListener('click', () => {
-    if (!draft.videoId && !loadFromUrl()) return;
-    if (draft.videoId !== loadedId){ setMsg('먼저 영상을 불러온 뒤 재생하면서 시점을 찍어주세요.'); ensureVideoForDraft(); return; }
-    const which = b.dataset.mark;
-    draft[which] = Math.round(curTime());
-    if (mode !== 'free') mode = 'free';
+  /* --- marking & nudging --- */
+  $$('[data-mark]').forEach(b => b.addEventListener('click', () => {
+    if (!draftOnScreen()){
+      if (bringDraftOnScreen() === false && (draft.videoId || src))
+        setMsg(draft.source === 'yt' ? '영상을 재생하면서 원하는 지점에서 다시 눌러주세요.' : '음성을 재생하면서 원하는 지점에서 다시 눌러주세요.');
+      return;
+    }
+    draft[b.dataset.mark] = Math.round(M.time());
+    mode = 'free';
     setMsg(''); syncTimes();
   }));
 
-  document.querySelectorAll('[data-nudge]').forEach(b => b.addEventListener('click', () => {
+  $$('[data-nudge]').forEach(b => b.addEventListener('click', () => {
     const which = b.dataset.nudge, d = +b.dataset.d;
+    const on = draftOnScreen();
     let base = draft[which];
-    if (base == null) base = (draft.videoId === loadedId) ? Math.round(curTime()) : 0;
+    if (base == null) base = on ? Math.round(M.time()) : 0;
     let v = Math.max(0, base + d);
-    const dur = draft.videoId === loadedId ? duration() : 0;
+    const dur = on ? M.dur() : 0;
     if (dur) v = Math.min(Math.floor(dur), v);
     draft[which] = v;
     syncTimes(); setMsg('');
-    if (draft.videoId && draft.videoId === loadedId){ mode = 'free'; seek(v); }
+    if (on){ mode = 'free'; M.seek(v); }
   }));
 
   ['start', 'end'].forEach(which => {
@@ -784,25 +1296,29 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
       if (Number.isNaN(v)){ el.classList.add('bad'); setMsg('시간은 1:23 또는 1:02:30처럼 분:초로 적어주세요.'); return; }
       draft[which] = v; el.classList.remove('bad'); setMsg('');
       el.value = fmt(v); updateLen();
-      if (draft.videoId && draft.videoId === loadedId){ mode = 'free'; seek(v); }
+      if (draftOnScreen()){ mode = 'free'; M.seek(v); }
     });
     el.addEventListener('keydown', e => { if (e.key === 'Enter') el.blur(); });
   });
+  $('#titleIn').addEventListener('input', updateNow);
 
+  /* --- validation --- */
   function validateDraft(){
-    if (!draft.videoId || !parseYouTube($('#url').value) || parseYouTube($('#url').value).id !== draft.videoId){
+    if (draft.source === 'yt'){
       const v = parseYouTube($('#url').value);
       if (!v) return '유튜브 영상 주소를 확인해주세요.';
-      draft.videoId = v.id;
-    }
+      if (v.id !== draft.videoId) draft.videoId = v.id;
+    } else if (!src) return '먼저 음성 파일을 골라주세요.';
     const sIn = parseTime($('#startIn').value), eIn = parseTime($('#endIn').value);
     if (Number.isNaN(sIn) || Number.isNaN(eIn)) return '시간은 1:23 또는 1:02:30처럼 분:초로 적어주세요.';
     draft.start = sIn; draft.end = eIn;
     if (draft.start == null) return '시작 시간을 정해주세요.';
     if (draft.end == null) return '끝 시간을 정해주세요.';
     if (draft.end <= draft.start) return '끝 시간은 시작 시간보다 뒤여야 해요.';
-    const dur = draft.videoId === loadedId ? duration() : 0;
-    if (dur && draft.start >= Math.ceil(dur)) return `시작 시간이 영상 길이(${fmt(dur)})를 넘어요.`;
+    let dur = draftOnScreen() ? M.dur() : 0;
+    if (draft.source === 'audio' && src.buffer) dur = src.buffer.duration;
+    const what = draft.source === 'yt' ? '영상' : '파일';
+    if (dur && draft.start >= Math.ceil(dur)) return `시작 시간이 ${what} 길이(${fmt(dur)})를 넘어요.`;
     if (dur && draft.end > Math.ceil(dur)) draft.end = Math.ceil(dur);
     return '';
   }
@@ -812,76 +1328,160 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
     if (err){ setMsg(err); return; }
     setMsg(''); syncTimes();
     mode = 'preview'; segEnd = draft.end; activeId = null; renderList();
-    loadVideo(draft.videoId, draft.start, true);
+    if (draft.source === 'yt') loadVideo(draft.videoId, draft.start, true);
+    else {
+      showSourceAudio();
+      whenAudMeta(() => { aud.currentTime = draft.start; aud.play().catch(() => {}); });
+    }
   });
 
-  $('#saveBtn').addEventListener('click', () => {
+  /* --- saving --- */
+  let saving = false;
+  $('#saveBtn').addEventListener('click', async () => {
+    if (saving) return;
+    if (draft.locked){ // editing a saved audio clip: title & memo only
+      const c = clips.find(x => x.id === draft.id);
+      if (c){
+        c.title = $('#titleIn').value.trim() || c.title;
+        c.memo = $('#memoIn').value.trim();
+        persist(); renderList(); updateAudioBox(); updateNow();
+        toast('변경 사항을 저장했어요');
+      }
+      resetForm(false);
+      return;
+    }
     const err = validateDraft();
     if (err){ setMsg(err); return; }
     setMsg('');
+    if (draft.source === 'yt') saveYt();
+    else await saveAudio();
+  });
+
+  function saveYt(){
     const data = normalize({
-      id: draft.id || uid(), videoId: draft.videoId,
+      id: draft.id || uid(), type: 'yt', videoId: draft.videoId,
       title: $('#titleIn').value.trim() || '제목 없는 구간',
       start: draft.start, end: draft.end, memo: $('#memoIn').value.trim()
     });
     if (draft.id){
       const i = clips.findIndex(c => c.id === draft.id);
-      if (i >= 0){ data.createdAt = clips[i].createdAt; clips[i] = data; }
-      else clips.unshift(data);
+      if (i >= 0){ data.createdAt = clips[i].createdAt; clips[i] = data; } else clips.unshift(data);
       toast('변경 사항을 저장했어요');
-      resetForm(true);
+      resetForm(false);
     } else {
       clips.unshift(data);
       toast('구간을 저장했어요');
-      // keep the same video loaded so the next clip is quick to make
       draft.start = null; draft.end = null; syncTimes();
       $('#titleIn').value = ''; $('#memoIn').value = '';
     }
     persist();
-    if ($('#list').scrollTop) $('#list').scrollTop = 0;
+    $('#list').scrollTop = 0;
     renderList();
-  });
+  }
 
+  async function saveAudio(){
+    const btn = $('#saveBtn'), label = btn.textContent;
+    saving = true; btn.disabled = true;
+    const from = src;
+    try {
+      btn.textContent = '파일 읽는 중…';
+      let buf;
+      try { buf = await from.decodeP; } catch (e) { throw new Error('decode'); }
+      const s = draft.start, e = Math.min(draft.end, buf.duration);
+      btn.textContent = '자르는 중…';
+      await tick();
+      const cut = await cutBuffer(buf, s, e);
+      const peaks = computePeaks(cut, 160);
+      const blob = await encodeAudio(cut, p => { btn.textContent = `저장 중… ${p}%`; });
+      const id = uid();
+      await idb.put(id, { buf: await blob.arrayBuffer(), mime: blob.type });
+      requestPersist();
+      const c = normalize({
+        id, type: 'audio', title: $('#titleIn').value.trim() || baseName(from.name) || '제목 없는 구간',
+        memo: $('#memoIn').value.trim(), start: s, end: e, mime: blob.type, size: blob.size,
+        fileName: from.name, peaks, length: cut.duration
+      });
+      clips.unshift(c); persist();
+      $('#list').scrollTop = 0;
+      renderList();
+      toast(`구간을 잘라서 저장했어요 · ${fmtSize(blob.size)}`);
+      draft.start = null; draft.end = null; syncTimes();
+      $('#titleIn').value = ''; $('#memoIn').value = '';
+    } catch (err) {
+      console.error(err);
+      if (err && err.message === 'decode') setMsg('이 음성 파일을 읽지 못했어요. 이 브라우저가 지원하지 않는 형식이거나 파일이 너무 길 수 있어요. mp3나 m4a로 시도해주세요.');
+      else if (err && err.name === 'QuotaExceededError') setMsg('브라우저 저장 공간이 부족해요. 필요 없는 음성 구간을 지우거나 백업한 뒤 정리해주세요.');
+      else setMsg('음성을 잘라 저장하지 못했어요. 다시 시도하거나 다른 파일로 해보세요.');
+    } finally {
+      saving = false; btn.disabled = false; btn.textContent = label;
+    }
+  }
+
+  /* --- edit / reset --- */
   function startEdit(c){
-    draft = { id: c.id, videoId: c.videoId, start: c.start, end: c.end };
-    $('#url').value = `https://youtu.be/${c.videoId}`;
+    draft = { id: c.id, source: c.type, videoId: c.type === 'yt' ? c.videoId : null, start: c.start, end: c.end, locked: c.type === 'audio' };
     $('#titleIn').value = c.title;
     $('#memoIn').value = c.memo;
+    if (c.type === 'yt') $('#url').value = `https://youtu.be/${c.videoId}`;
+    else $('#lockedRange').textContent = `${fmt(c.start)} – ${fmt(c.end)}`;
     syncTimes(); setMsg('');
     $('#editorTitle').textContent = '구간 수정';
     $('#saveBtn').textContent = '변경 저장';
     $('#cancelBtn').hidden = false;
+    applySourceUi();
     setEditorOpen(true);
     activeId = c.id; mode = 'free'; renderList();
-    loadVideo(c.videoId, c.start, false);
+    if (c.type === 'yt') loadVideo(c.videoId, c.start, false);
+    else playAudioClip(c, false);
     if (mqMobile.matches) $('#editor').scrollIntoView({ behavior: 'smooth', block: 'start' });
     else $('#titleIn').focus({ preventScroll: true });
   }
 
-  function resetForm(keepVideo){
-    draft = { id: null, videoId: keepVideo ? null : null, start: null, end: null };
+  function resetForm(clearSource){
+    const source = draft.source;
+    draft = newDraft(source);
     $('#url').value = ''; $('#titleIn').value = ''; $('#memoIn').value = '';
     $('#url').classList.remove('bad');
+    if (clearSource && src){
+      if (audLoaded && audLoaded.kind === 'source'){ aud.pause(); aud.removeAttribute('src'); aud.load(); audLoaded = null; setView(loadedId ? 'yt' : 'none'); }
+      URL.revokeObjectURL(src.url); src = null;
+      $('#drop').classList.remove('has-file');
+      $('#fileName').textContent = '음성 파일 고르기';
+      $('#fileMeta').textContent = 'mp3, m4a, wav 등 · 여기로 끌어다 놓아도 돼요';
+    }
     syncTimes(); setMsg('');
     $('#editorTitle').textContent = '새 구간 만들기';
     $('#saveBtn').textContent = '구간 저장';
     $('#cancelBtn').hidden = true;
+    applySourceUi();
+    updateNow();
   }
-  $('#cancelBtn').addEventListener('click', () => resetForm());
-  $('#resetBtn').addEventListener('click', () => resetForm());
+  $('#cancelBtn').addEventListener('click', () => resetForm(false));
+  $('#resetBtn').addEventListener('click', () => resetForm(true));
 
-  /* ---------------- backup ---------------- */
-  $('#exportBtn').addEventListener('click', () => {
+  /* ================= backup ================= */
+  $('#exportBtn').addEventListener('click', async () => {
     if (!clips.length){ toast('내보낼 구간이 아직 없어요'); return; }
-    const payload = { app: 'yt-clips', version: 1, exportedAt: new Date().toISOString(), clips };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const d = new Date();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `구간보관함-백업-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    toast(`구간 ${clips.length}개를 백업 파일로 내보냈어요`);
+    const btn = $('#exportBtn'); btn.disabled = true;
+    try {
+      const audio = {}; let missing = 0;
+      const audioClips = clips.filter(c => c.type === 'audio');
+      if (audioClips.length) toast('백업 파일을 만드는 중…', null, null, true);
+      for (const c of audioClips){
+        let rec = null; try { rec = await idb.get(c.id); } catch (e) {}
+        if (rec){ audio[c.id] = { mime: rec.mime, data: abToB64(rec.buf) }; await tick(); }
+        else missing++;
+      }
+      const payload = { app: 'yt-clips', version: 2, exportedAt: new Date().toISOString(), clips, audio };
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      const d = new Date();
+      downloadBlob(blob, `구간보관함-백업-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`);
+      toast(`구간 ${clips.length}개를 백업 파일로 내보냈어요` + (audioClips.length ? ` · ${fmtSize(blob.size)}` : '') +
+            (missing ? ` · 음성 데이터가 없는 ${missing}개는 정보만 담았어요` : ''));
+    } catch (e) {
+      console.error(e);
+      toast('백업 파일을 만들지 못했어요. 음성 구간이 너무 많으면 일부를 지운 뒤 다시 시도해주세요.');
+    } finally { btn.disabled = false; }
   });
 
   let incoming = [];
@@ -893,33 +1493,70 @@ dialog p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6}
       const data = JSON.parse(await f.text());
       const arr = Array.isArray(data) ? data : (data && Array.isArray(data.clips) ? data.clips : null);
       if (!arr) throw new Error('format');
-      incoming = arr.filter(isValidClip).map(normalize);
+      const audioMap = data && data.audio && typeof data.audio === 'object' ? data.audio : {};
+      incoming = []; let bad = 0, noAudio = 0;
+      for (const raw of arr){
+        if (!isValidClip(raw)){ bad++; continue; }
+        const c = normalize(raw);
+        if (c.type === 'audio'){
+          const a = audioMap[raw.id];
+          if (!a || typeof a.data !== 'string'){ noAudio++; continue; }
+          c._audio = a;
+        }
+        incoming.push(c);
+      }
       if (!incoming.length){ toast('이 파일에는 불러올 구간이 없어요'); return; }
-      const skipped = arr.length - incoming.length;
+      const skipped = [];
+      if (bad) skipped.push(`형식이 맞지 않는 ${bad}개`);
+      if (noAudio) skipped.push(`음성 데이터가 없는 ${noAudio}개`);
       $('#importInfo').textContent = `백업 파일에서 구간 ${incoming.length}개를 찾았어요` +
-        (skipped ? ` (형식이 맞지 않는 ${skipped}개는 제외)` : '') +
+        (skipped.length ? ` (${skipped.join(', ')}는 제외)` : '') +
         `. 지금 목록에는 ${clips.length}개가 있어요. 어떻게 불러올까요?`;
       $('#importDlg').showModal();
     } catch (err){
       toast('백업 파일을 읽지 못했어요. 이 앱에서 내보낸 .json 파일인지 확인해주세요.');
     }
   });
-  $('#mergeBtn').addEventListener('click', () => {
+  async function storeIncomingAudio(list){
+    for (const c of list){
+      if (c._audio){ await idb.put(c.id, { buf: b64ToAb(c._audio.data), mime: String(c._audio.mime || 'audio/mpeg') }); await tick(); }
+    }
+  }
+  const strip = c => { const o = Object.assign({}, c); delete o._audio; return o; };
+  async function runImport(fn){
+    $('#mergeBtn').disabled = $('#overwriteBtn').disabled = true;
+    try { await fn(); requestPersist(); }
+    catch (e){
+      console.error(e);
+      toast(e && e.name === 'QuotaExceededError' ? '브라우저 저장 공간이 부족해서 다 불러오지 못했어요.' : '불러오는 중에 문제가 생겼어요. 다시 시도해주세요.');
+    } finally {
+      $('#mergeBtn').disabled = $('#overwriteBtn').disabled = false;
+      if ($('#importDlg').open) $('#importDlg').close();
+      incoming = [];
+    }
+  }
+  $('#mergeBtn').addEventListener('click', () => runImport(async () => {
     const have = new Set(clips.map(c => c.id));
     const add = incoming.filter(c => !have.has(c.id));
-    clips = clips.concat(add);
-    persist(); renderList(); $('#importDlg').close();
+    await storeIncomingAudio(add);
+    clips = clips.concat(add.map(strip));
+    persist(); renderList();
     const dup = incoming.length - add.length;
     toast(`${add.length}개를 더했어요` + (dup ? ` · 이미 있던 ${dup}개는 건너뜀` : ''));
-  });
-  $('#overwriteBtn').addEventListener('click', () => {
-    const before = clips.slice();
-    clips = incoming.slice(); activeId = null;
-    persist(); renderList(); updateNow(); $('#importDlg').close();
-    toast(`목록을 백업 내용 ${clips.length}개로 바꿨어요`, '되돌리기', () => { clips = before; persist(); renderList(); });
-  });
+  }));
+  $('#overwriteBtn').addEventListener('click', () => runImport(async () => {
+    await storeIncomingAudio(incoming);
+    const keep = new Set(incoming.map(c => c.id));
+    for (const c of clips) if (c.type === 'audio' && !keep.has(c.id)){ try { await idb.del(c.id); } catch (e) {} }
+    clips = incoming.map(strip);
+    activeId = null;
+    if (audLoaded && audLoaded.kind === 'clip'){ aud.pause(); aud.removeAttribute('src'); aud.load(); audLoaded = null; setView(loadedId ? 'yt' : 'none'); }
+    persist(); renderList(); updateNow();
+    toast(`목록을 백업 내용 ${clips.length}개로 바꿨어요`);
+  }));
   $('#importCancel').addEventListener('click', () => $('#importDlg').close());
 
+  applySourceUi();
   renderList();
   updateNow();
 })();
